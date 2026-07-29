@@ -1,0 +1,32 @@
+{
+  "name": "obsidian-office-preview",
+  "version": "1.0.0",
+  "description": "Native Word and Excel preview plugin for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "docx",
+    "xlsx",
+    "office-preview"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "0.20.2",
+    "obsidian": "^1.5.7",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "docx-preview": "^0.3.4",
+    "x-data-spreadsheet": "^1.1.9",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,262 @@
+/* 工具栏统一样式 */
+.office-preview-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+    height: 38px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.office-preview-title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.office-preview-title {
+    font-weight: 600;
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.office-preview-mtime {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    opacity: 0.75;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.office-preview-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.office-preview-btn {
+    background-color: var(--interactive-normal);
+    color: var(--text-normal);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.office-preview-btn:hover {
+    background-color: var(--interactive-hover);
+}
+
+/* 多 Sheet 切换栏样式 */
+.office-preview-sheet-tabs-bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 12px 0 12px;
+    background-color: var(--background-secondary-alt);
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    white-space: nowrap;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.office-preview-sheet-tab {
+    background-color: var(--background-primary-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 5px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.office-preview-sheet-tab:hover {
+    color: var(--text-normal);
+    background-color: var(--interactive-hover);
+}
+
+.office-preview-sheet-tab.is-active {
+    color: var(--interactive-accent);
+    background-color: var(--background-primary);
+    border-color: var(--border-color);
+    border-bottom: 2px solid var(--interactive-accent);
+    font-weight: 600;
+}
+
+/* 加载与错误提示 */
+.office-preview-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.office-preview-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--text-error, #ff4d4f);
+    padding: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Word (.docx) 容器与自然连续排版样式 */
+.office-preview-docx-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary-alt);
+}
+
+.office-preview-docx-wrapper {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.docx-render-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.docx-render-body .docx-wrapper {
+    background-color: transparent !important;
+    padding: 0 !important;
+    font-size: initial !important;
+    width: 100% !important;
+}
+
+/* 自然优雅的 Word 卡片排版 */
+.docx-render-body section.docx {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 24px !important;
+    background-color: var(--background-primary) !important;
+    color: var(--text-normal) !important;
+    border-radius: 6px !important;
+    padding: 40px 50px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.docx-render-body section.docx p,
+.docx-render-body section.docx span,
+.docx-render-body section.docx table,
+.docx-render-body section.docx td,
+.docx-render-body section.docx th {
+    font-size: inherit;
+    line-height: normal;
+}
+
+/* Excel (.xlsx) 容器与原生表格样式 */
+.office-preview-xlsx-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary);
+}
+
+.office-preview-xlsx-wrapper {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+}
+
+.excel-table-container {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.excel-table {
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--font-interface);
+    color: var(--text-normal);
+    background-color: var(--background-primary);
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+}
+
+.excel-corner-header,
+.excel-col-header {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-secondary);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    z-index: 2;
+    user-select: none;
+    min-width: 80px;
+}
+
+.excel-corner-header {
+    left: 0;
+    z-index: 3;
+    min-width: 45px;
+    width: 45px;
+}
+
+.excel-row-header {
+    position: sticky;
+    left: 0;
+    background-color: var(--background-secondary);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+    z-index: 1;
+    user-select: none;
+    width: 45px;
+    min-width: 45px;
+}
+
+.excel-cell {
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+    white-space: pre;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.excel-cell.is-empty {
+    color: transparent;
+}
+
+.excel-table tr:hover .excel-cell {
+    background-color: var(--background-secondary-alt);
+}

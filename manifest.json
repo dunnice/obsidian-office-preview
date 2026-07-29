@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-office-preview",
+	"name": "Office Preview",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Preview Word (.docx) and Excel (.xlsx, .xls, .csv) files natively in Obsidian.",
+	"author": "Antigravity",
+	"authorUrl": "",
+	"isDesktopOnly": true
+}
