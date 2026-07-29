@@ -10,6 +10,7 @@
     height: 38px;
     flex-shrink: 0;
     box-sizing: border-box;
+    position: relative;
 }
 
 .office-preview-title-container {
@@ -55,6 +56,94 @@
 
 .office-preview-btn:hover {
     background-color: var(--interactive-hover);
+}
+
+/* 悬浮搜索控制面板 */
+.office-preview-search-bar {
+    position: absolute;
+    top: 44px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.office-preview-search-bar.is-hidden {
+    display: none !important;
+}
+
+.office-preview-search-input {
+    width: 180px;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--text-normal);
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    outline: none;
+}
+
+.office-preview-search-input:focus {
+    border-color: var(--interactive-accent);
+}
+
+.office-preview-search-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-width: 40px;
+    text-align: center;
+    user-select: none;
+}
+
+.office-preview-search-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 2px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.office-preview-search-btn:hover {
+    color: var(--text-normal);
+    background-color: var(--interactive-hover);
+}
+
+/* Word 文档搜索高亮 */
+mark.docx-search-highlight {
+    background-color: rgba(255, 226, 89, 0.5) !important;
+    color: inherit !important;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+mark.docx-search-highlight.is-active {
+    background-color: #ff9800 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.5);
+}
+
+/* Excel 单元格搜索高亮 */
+.excel-cell.excel-search-highlight {
+    background-color: rgba(255, 226, 89, 0.4) !important;
+}
+
+.excel-cell.excel-search-highlight.is-active-match {
+    background-color: #ff9800 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    outline: 2px solid #e65100;
 }
 
 /* 多 Sheet 切换栏样式 */
@@ -125,6 +214,7 @@
     width: 100%;
     overflow: hidden;
     background-color: var(--background-primary-alt);
+    position: relative;
 }
 
 .office-preview-docx-wrapper {
@@ -150,7 +240,6 @@
     width: 100% !important;
 }
 
-/* 自然优雅的 Word 卡片排版 */
 .docx-render-body section.docx {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     margin-bottom: 24px !important;
@@ -179,6 +268,7 @@
     width: 100%;
     overflow: hidden;
     background-color: var(--background-primary);
+    position: relative;
 }
 
 .office-preview-xlsx-wrapper {
@@ -251,6 +341,7 @@
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: background-color 0.15s ease;
 }
 
 .excel-cell.is-empty {
