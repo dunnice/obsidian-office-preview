@@ -1,7 +1,7 @@
 {
   "name": "obsidian-office-preview",
-  "version": "1.1.0",
-  "description": "Native Word and Excel preview plugin for Obsidian",
+  "version": "1.2.0",
+  "description": "Native Word, Excel, and PowerPoint preview plugin for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -12,6 +12,9 @@
     "obsidian-plugin",
     "docx",
     "xlsx",
+    "pptx",
+    "ppt",
+    "powerpoint",
     "office-preview"
   ],
   "author": "Antigravity",
@@ -26,6 +29,7 @@
   },
   "dependencies": {
     "docx-preview": "^0.3.4",
+    "pptx-preview": "^1.0.7",
     "x-data-spreadsheet": "^1.1.9",
     "xlsx": "^0.18.5"
   }

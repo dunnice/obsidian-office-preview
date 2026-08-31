@@ -351,3 +351,175 @@ mark.docx-search-highlight.is-active {
 .excel-table tr:hover .excel-cell {
     background-color: var(--background-secondary-alt);
 }
+
+/* 按钮状态拓展 */
+.office-preview-btn.is-active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent, #ffffff);
+    border-color: var(--interactive-accent);
+}
+
+.office-preview-btn.is-primary {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent, #ffffff);
+    border-color: var(--interactive-accent);
+    font-weight: 500;
+}
+
+.office-preview-btn.is-primary:hover {
+    opacity: 0.9;
+}
+
+.office-preview-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* PPT 翻页控件组 */
+.office-preview-pptx-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.office-preview-pptx-nav-group.is-hidden {
+    display: none !important;
+}
+
+.office-preview-page-indicator {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 48px;
+    text-align: center;
+    user-select: none;
+}
+
+/* PPT 缩放控件组 */
+.office-preview-zoom-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.office-preview-zoom-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 36px;
+    text-align: center;
+    user-select: none;
+}
+
+/* PowerPoint (.pptx) 容器与视口样式 */
+.office-preview-pptx-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary-alt);
+    position: relative;
+}
+
+.office-preview-pptx-wrapper {
+    flex: 1;
+    overflow: auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+}
+
+.office-preview-pptx-wrapper:fullscreen {
+    padding: 0;
+    background-color: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pptx-scale-wrapper {
+    transform-origin: top center;
+    transition: transform 0.15s ease-out;
+    display: flex;
+    justify-content: center;
+}
+
+.pptx-render-mount {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 幻灯片渲染卡片细节样式增强 */
+.pptx-render-mount .slide,
+.pptx-render-mount .slide-wrapper,
+.pptx-render-mount .pptx-slide {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 6px !important;
+    margin-bottom: 24px !important;
+    background-color: #ffffff !important;
+    overflow: hidden;
+}
+
+/* PPT 搜索高亮 */
+mark.pptx-search-highlight {
+    background-color: rgba(255, 226, 89, 0.6) !important;
+    color: #000000 !important;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+mark.pptx-search-highlight.is-active {
+    background-color: #ff9800 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6);
+}
+
+/* 旧版 .ppt 格式智能识别与引导卡片 */
+.office-preview-legacy-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 40px 32px;
+    max-width: 480px;
+    margin: 60px auto 0 auto;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+}
+
+.office-preview-legacy-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.office-preview-legacy-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+    margin: 0 0 12px 0;
+}
+
+.office-preview-legacy-desc {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 0 0 24px 0;
+}
+
+.office-preview-legacy-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
