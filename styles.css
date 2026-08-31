@@ -569,7 +569,7 @@ mark.pptx-search-highlight.is-active {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 14px;
+    padding: 6px 12px;
     font-size: 12px;
     font-weight: 600;
     color: var(--text-muted);
@@ -577,6 +577,34 @@ mark.pptx-search-highlight.is-active {
     background-color: var(--background-secondary-alt);
     user-select: none;
     flex-shrink: 0;
+}
+
+.outline-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.outline-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.outline-action-icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+}
+
+.outline-action-icon-btn:hover {
+    color: var(--text-normal);
+    background-color: var(--interactive-hover);
 }
 
 .outline-count {
@@ -598,16 +626,25 @@ mark.pptx-search-highlight.is-active {
     padding: 8px 0;
 }
 
+.outline-children-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.outline-children-group.is-hidden {
+    display: none !important;
+}
+
 .outline-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
+    gap: 4px;
+    padding: 4px 8px;
     font-size: 12px;
     color: var(--text-normal);
     cursor: pointer;
     border-radius: 4px;
-    margin: 1px 8px;
+    margin: 1px 6px;
     transition: all 0.15s ease;
     user-select: none;
     font-family: var(--font-monospace);
@@ -616,6 +653,30 @@ mark.pptx-search-highlight.is-active {
 .outline-item:hover {
     background-color: var(--interactive-hover);
     color: var(--interactive-accent);
+}
+
+/* 折叠小箭头 */
+.outline-toggle-arrow {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 2px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.outline-toggle-arrow.has-children:hover {
+    background-color: var(--interactive-hover);
+    color: var(--interactive-accent);
+}
+
+.outline-toggle-arrow.is-leaf {
+    visibility: hidden;
 }
 
 .outline-item-icon {
@@ -636,6 +697,22 @@ mark.pptx-search-highlight.is-active {
     max-width: 140px;
 }
 
+/* 折叠时数量角标 */
+.outline-collapsed-badge {
+    font-size: 10px;
+    color: var(--text-muted);
+    background-color: var(--background-secondary-alt);
+    border: 1px solid var(--border-color);
+    padding: 0 4px;
+    border-radius: 3px;
+    margin-left: 4px;
+    opacity: 0.85;
+}
+
+.outline-collapsed-badge.is-hidden {
+    display: none !important;
+}
+
 .outline-item-preview {
     font-size: 11px;
     color: var(--text-faint);
@@ -643,7 +720,7 @@ mark.pptx-search-highlight.is-active {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 180px;
+    max-width: 160px;
     opacity: 0.85;
 }
 

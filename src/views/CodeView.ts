@@ -6,13 +6,16 @@ import 'prismjs/components/prism-yaml';
 
 export const VIEW_TYPE_CODE = 'office-preview-code-view';
 
-interface OutlineNode {
+interface OutlineTreeNode {
+    id: string;
     key: string;
     path: string;
     type: 'object' | 'array' | 'value';
     preview?: string;
     level: number;
     lineNumber: number;
+    children: OutlineTreeNode[];
+    isCollapsed: boolean;
 }
 
 export class CodeView extends FileView {
@@ -22,6 +25,7 @@ export class CodeView extends FileView {
     private isJsonFormatted: boolean = true;
     private language: string = 'plaintext';
     private isOutlineVisible: boolean = true;
+    private outlineTree: OutlineTreeNode[] = [];
 
     // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
@@ -72,6 +76,7 @@ export class CodeView extends FileView {
         this.rawContent = '';
         this.formattedContent = '';
         this.searchMatches = [];
+        this.outlineTree = [];
         this.contentEl.empty();
     }
 
@@ -243,7 +248,7 @@ export class CodeView extends FileView {
 
             this.renderSyntaxTree(codeMount, displayCode);
 
-            // 渲染右侧 40% 层级大纲
+            // 渲染右侧支持折叠展开的层级大纲
             if (supportsOutline) {
                 this.renderOutlineTree(outlinePane, renderWrapper, displayCode);
             }
@@ -385,20 +390,37 @@ export class CodeView extends FileView {
     }
 
     /**
-     * 构建右侧 40% 宽度的结构大纲面板
+     * 构建右侧结构大纲面板 (支持多级折叠与一键全部折叠/展开)
      */
     private renderOutlineTree(outlinePane: HTMLElement, codeWrapper: HTMLElement, codeText: string): void {
         outlinePane.empty();
 
-        const nodes = this.language === 'json'
-            ? this.extractJsonOutline(codeText)
-            : this.extractYamlOutline(codeText);
+        this.outlineTree = this.language === 'json'
+            ? this.buildJsonOutlineTree(codeText)
+            : this.buildYamlOutlineTree(codeText);
 
+        const totalNodes = this.countTreeNodes(this.outlineTree);
+
+        // 大纲顶部工具栏
         const header = outlinePane.createEl('div', { cls: 'outline-header' });
-        header.createEl('span', { cls: 'outline-title', text: '🗂️ 层级大纲 (40%)' });
-        header.createEl('span', { cls: 'outline-count', text: `${nodes.length} 项` });
+        const headerLeft = header.createEl('div', { cls: 'outline-header-left' });
+        headerLeft.createEl('span', { cls: 'outline-title', text: '🗂️ 层级大纲' });
+        headerLeft.createEl('span', { cls: 'outline-count', text: `${totalNodes} 项` });
 
-        if (nodes.length === 0) {
+        // 快速折叠与展开按钮组
+        const headerActions = header.createEl('div', { cls: 'outline-header-actions' });
+        const collapseAllBtn = headerActions.createEl('button', {
+            cls: 'outline-action-icon-btn',
+            text: '🔼',
+            title: '折叠全部层级'
+        });
+        const expandAllBtn = headerActions.createEl('button', {
+            cls: 'outline-action-icon-btn',
+            text: '🔽',
+            title: '展开全部层级'
+        });
+
+        if (this.outlineTree.length === 0) {
             const emptyEl = outlinePane.createEl('div', { cls: 'outline-empty' });
             emptyEl.setText('未检测到层级结构');
             return;
@@ -406,52 +428,128 @@ export class CodeView extends FileView {
 
         const listEl = outlinePane.createEl('div', { cls: 'outline-list' });
 
-        nodes.forEach((node) => {
-            const itemEl = listEl.createEl('div', {
-                cls: `outline-item level-${Math.min(node.level, 8)}`
-            });
-            itemEl.style.paddingLeft = `${node.level * 16 + 12}px`;
+        // 递归渲染节点 DOM
+        const renderNodesRecursive = (nodes: OutlineTreeNode[], parentContainer: HTMLElement) => {
+            nodes.forEach((node) => {
+                const nodeRowEl = parentContainer.createEl('div', {
+                    cls: `outline-item level-${Math.min(node.level, 8)}`
+                });
+                nodeRowEl.style.paddingLeft = `${node.level * 14 + 8}px`;
 
-            // 类型图标
-            const iconEl = itemEl.createEl('span', { cls: 'outline-item-icon' });
-            if (node.type === 'object') iconEl.setText('{ }');
-            else if (node.type === 'array') iconEl.setText('[ ]');
-            else iconEl.setText('•');
+                const hasChildren = node.children && node.children.length > 0;
 
-            // 键名
-            itemEl.createEl('span', { cls: 'outline-item-key', text: node.key });
+                // 折叠/展开小箭头 (父节点可点击折叠)
+                const arrowEl = nodeRowEl.createEl('span', {
+                    cls: `outline-toggle-arrow ${hasChildren ? 'has-children' : 'is-leaf'} ${node.isCollapsed ? 'is-collapsed' : ''}`,
+                    text: hasChildren ? (node.isCollapsed ? '▶' : '▼') : ' '
+                });
 
-            // 预览值/提示 (40% 宽度下支持显示更丰富的内容)
-            if (node.preview) {
-                itemEl.createEl('span', { cls: 'outline-item-preview', text: node.preview });
-            }
+                // 类型图标
+                const iconEl = nodeRowEl.createEl('span', { cls: 'outline-item-icon' });
+                if (node.type === 'object') iconEl.setText('{ }');
+                else if (node.type === 'array') iconEl.setText('[ ]');
+                else iconEl.setText('•');
 
-            // 行号标签
-            itemEl.createEl('span', { cls: 'outline-item-line', text: `:${node.lineNumber}` });
+                // 键名
+                nodeRowEl.createEl('span', { cls: 'outline-item-key', text: node.key });
 
-            // 点击平滑滚动定位至对应代码行并聚焦高亮
-            itemEl.onclick = () => {
-                const targetTr = codeWrapper.querySelector(`tr[data-line-number="${node.lineNumber}"]`);
-                if (targetTr) {
-                    targetTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // 添加短暂聚焦动画
-                    targetTr.addClass('is-focused-line');
-                    setTimeout(() => targetTr.removeClass('is-focused-line'), 1600);
+                // 折叠时显示包含的子节点数量提示
+                const collapsedBadgeEl = nodeRowEl.createEl('span', {
+                    cls: `outline-collapsed-badge ${node.isCollapsed ? '' : 'is-hidden'}`,
+                    text: `{ ${node.children.length} }`
+                });
+
+                // 预览值/提示
+                if (node.preview && !hasChildren) {
+                    nodeRowEl.createEl('span', { cls: 'outline-item-preview', text: node.preview });
                 }
+
+                // 行号标签
+                nodeRowEl.createEl('span', { cls: 'outline-item-line', text: `:${node.lineNumber}` });
+
+                // 子节点容器
+                let childrenContainer: HTMLElement | null = null;
+                if (hasChildren) {
+                    childrenContainer = parentContainer.createEl('div', {
+                        cls: `outline-children-group ${node.isCollapsed ? 'is-hidden' : ''}`
+                    });
+                    renderNodesRecursive(node.children, childrenContainer);
+                }
+
+                // 点击小箭头折叠/展开当前节点
+                if (hasChildren && childrenContainer) {
+                    arrowEl.onclick = (e) => {
+                        e.stopPropagation();
+                        node.isCollapsed = !node.isCollapsed;
+                        arrowEl.setText(node.isCollapsed ? '▶' : '▼');
+                        arrowEl.toggleClass('is-collapsed', node.isCollapsed);
+                        childrenContainer!.toggleClass('is-hidden', node.isCollapsed);
+                        collapsedBadgeEl.toggleClass('is-hidden', !node.isCollapsed);
+                    };
+                }
+
+                // 点击节点行平滑定位并聚焦代码行
+                nodeRowEl.onclick = () => {
+                    const targetTr = codeWrapper.querySelector(`tr[data-line-number="${node.lineNumber}"]`);
+                    if (targetTr) {
+                        targetTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetTr.addClass('is-focused-line');
+                        setTimeout(() => targetTr.removeClass('is-focused-line'), 1600);
+                    }
+                };
+            });
+        };
+
+        renderNodesRecursive(this.outlineTree, listEl);
+
+        // 全部折叠
+        collapseAllBtn.onclick = () => {
+            const setAllCollapsed = (nodes: OutlineTreeNode[], collapsed: boolean) => {
+                nodes.forEach((n) => {
+                    if (n.children.length > 0) {
+                        n.isCollapsed = collapsed;
+                        setAllCollapsed(n.children, collapsed);
+                    }
+                });
             };
+            setAllCollapsed(this.outlineTree, true);
+            this.renderOutlineTree(outlinePane, codeWrapper, codeText);
+        };
+
+        // 全部展开
+        expandAllBtn.onclick = () => {
+            const setAllCollapsed = (nodes: OutlineTreeNode[], collapsed: boolean) => {
+                nodes.forEach((n) => {
+                    if (n.children.length > 0) {
+                        n.isCollapsed = collapsed;
+                        setAllCollapsed(n.children, collapsed);
+                    }
+                });
+            };
+            setAllCollapsed(this.outlineTree, false);
+            this.renderOutlineTree(outlinePane, codeWrapper, codeText);
+        };
+    }
+
+    private countTreeNodes(nodes: OutlineTreeNode[]): number {
+        let count = 0;
+        nodes.forEach((n) => {
+            count += 1;
+            if (n.children.length > 0) {
+                count += this.countTreeNodes(n.children);
+            }
         });
+        return count;
     }
 
     /**
-     * 从格式化 JSON 中提取层级大纲
+     * 将扁平的 JSON 键行构建为多级树形结构
      */
-    private extractJsonOutline(jsonText: string): OutlineNode[] {
-        const nodes: OutlineNode[] = [];
+    private buildJsonOutlineTree(jsonText: string): OutlineTreeNode[] {
+        const flatNodes: OutlineTreeNode[] = [];
         const lines = jsonText.split('\n');
 
         lines.forEach((line, idx) => {
-            const trimmed = line.trim();
-            // 匹配类似于 "key": { 或 "key": [ 或 "key": "value"
             const match = line.match(/^(\s*)"([^"]+)"\s*:\s*(.*)$/);
             if (match) {
                 const indent = match[1].length;
@@ -472,33 +570,34 @@ export class CodeView extends FileView {
                     if (preview.length > 36) preview = preview.substring(0, 34) + '...';
                 }
 
-                nodes.push({
+                flatNodes.push({
+                    id: `json-${idx + 1}`,
                     key,
                     path: key,
                     type,
                     preview,
                     level,
-                    lineNumber: idx + 1
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
                 });
             }
         });
 
-        return nodes;
+        return this.constructTreeFromFlatNodes(flatNodes);
     }
 
     /**
-     * 从 YAML 文本中提取层级大纲
+     * 将扁平的 YAML 键行构建为多级树形结构
      */
-    private extractYamlOutline(yamlText: string): OutlineNode[] {
-        const nodes: OutlineNode[] = [];
+    private buildYamlOutlineTree(yamlText: string): OutlineTreeNode[] {
+        const flatNodes: OutlineTreeNode[] = [];
         const lines = yamlText.split('\n');
 
         lines.forEach((line, idx) => {
-            // 忽略注释与空行
             const trimmed = line.trim();
             if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('---')) return;
 
-            // 匹配键行: "  key:" 或 "  - key: value" 或 "  key: value"
             const match = line.match(/^(\s*)(?:-\s+)?([a-zA-Z0-9_\-\.\/]+)\s*:\s*(.*)$/);
             if (match) {
                 const indent = match[1].length;
@@ -519,18 +618,45 @@ export class CodeView extends FileView {
                     if (preview.length > 36) preview = preview.substring(0, 34) + '...';
                 }
 
-                nodes.push({
+                flatNodes.push({
+                    id: `yaml-${idx + 1}`,
                     key,
                     path: key,
                     type,
                     preview,
                     level,
-                    lineNumber: idx + 1
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
                 });
             }
         });
 
-        return nodes;
+        return this.constructTreeFromFlatNodes(flatNodes);
+    }
+
+    /**
+     * 基于层级 level 使用栈算法将平铺节点转换为标准嵌套树
+     */
+    private constructTreeFromFlatNodes(flatNodes: OutlineTreeNode[]): OutlineTreeNode[] {
+        const rootNodes: OutlineTreeNode[] = [];
+        const stack: OutlineTreeNode[] = [];
+
+        flatNodes.forEach((node) => {
+            while (stack.length > 0 && stack[stack.length - 1].level >= node.level) {
+                stack.pop();
+            }
+
+            if (stack.length === 0) {
+                rootNodes.push(node);
+            } else {
+                stack[stack.length - 1].children.push(node);
+            }
+
+            stack.push(node);
+        });
+
+        return rootNodes;
     }
 
     private openWithDefaultApp(): void {
