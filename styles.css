@@ -499,3 +499,231 @@ mark.pptx-search-highlight.is-active {
     flex-wrap: wrap;
     justify-content: center;
 }
+
+/* =========================================================
+ * 结构化代码与配置文件视图 (JSON, SQL, YAML, YML) 专属样式
+ * ========================================================= */
+.office-preview-code-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary);
+    position: relative;
+}
+
+.office-preview-code-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-primary);
+}
+
+.code-render-mount {
+    width: 100%;
+    min-width: 100%;
+    display: block;
+}
+
+.code-viewer-container {
+    width: 100%;
+    min-width: max-content;
+}
+
+.code-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: var(--font-monospace, 'Menlo', 'Consolas', 'Courier New', monospace);
+    font-size: 13px;
+    line-height: 1.55;
+    letter-spacing: 0;
+    table-layout: auto;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.code-line-tr {
+    border: none;
+    transition: background-color 0.1s ease;
+}
+
+.code-line-tr:hover {
+    background-color: var(--background-secondary);
+}
+
+.code-line-number {
+    width: 50px;
+    min-width: 50px;
+    padding: 2px 14px 2px 8px;
+    text-align: right;
+    color: var(--text-faint);
+    user-select: none;
+    border-right: 1px solid var(--border-color);
+    font-size: 11.5px;
+    vertical-align: top;
+    background-color: var(--background-primary-alt);
+    opacity: 0.8;
+}
+
+.code-line-content {
+    padding: 2px 16px;
+    white-space: pre;
+    vertical-align: top;
+    color: var(--text-normal);
+}
+
+.code-line-content pre {
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
+    overflow: visible;
+}
+
+.code-line-content code {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    padding: 0 !important;
+    background: transparent !important;
+    color: inherit;
+}
+
+/* Prism 语法高亮着色（适配暗黑/明亮主题） */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: #8b949e;
+    font-style: italic;
+}
+
+.token.punctuation {
+    color: var(--text-muted);
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+    color: #0969da;
+}
+
+.theme-dark .token.property,
+.theme-dark .token.tag,
+.theme-dark .token.boolean,
+.theme-dark .token.number,
+.theme-dark .token.constant,
+.theme-dark .token.symbol,
+.theme-dark .token.deleted {
+    color: #79c0ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+    color: #0a8f4c;
+}
+
+.theme-dark .token.selector,
+.theme-dark .token.attr-name,
+.theme-dark .token.string,
+.theme-dark .token.char,
+.theme-dark .token.builtin,
+.theme-dark .token.inserted {
+    color: #7ee787;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: #b35900;
+}
+
+.theme-dark .token.operator,
+.theme-dark .token.entity,
+.theme-dark .token.url,
+.theme-dark .language-css .token.string,
+.theme-dark .style .token.string {
+    color: #ffab70;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: #8250df;
+    font-weight: 600;
+}
+
+.theme-dark .token.atrule,
+.theme-dark .token.attr-value,
+.theme-dark .token.keyword {
+    color: #d2a8ff;
+    font-weight: 600;
+}
+
+.token.function,
+.token.class-name {
+    color: #6f42c1;
+}
+
+.theme-dark .token.function,
+.theme-dark .token.class-name {
+    color: #d2a8ff;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+    color: #cf222e;
+}
+
+.theme-dark .token.regex,
+.theme-dark .token.important,
+.theme-dark .token.variable {
+    color: #ffa657;
+}
+
+/* YAML 专属键名优化 */
+.language-yaml .token.key {
+    color: #0969da;
+    font-weight: 600;
+}
+
+.theme-dark .language-yaml .token.key {
+    color: #79c0ff;
+    font-weight: 600;
+}
+
+/* Code 搜索高亮 */
+mark.code-search-highlight {
+    background-color: rgba(255, 226, 89, 0.6) !important;
+    color: inherit !important;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+mark.code-search-highlight.is-active {
+    background-color: #ff9800 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6);
+}
