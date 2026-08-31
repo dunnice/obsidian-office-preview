@@ -26,6 +26,10 @@ export class PptxView extends FileView {
     private nextSlideBtn: HTMLButtonElement | null = null;
     private zoomTextEl: HTMLElement | null = null;
     private pptxScaleWrapperEl: HTMLElement | null = null;
+    private renderWrapperEl: HTMLElement | null = null;
+
+    private readonly baseWidth = 960;
+    private readonly baseHeight = 540;
 
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
@@ -92,7 +96,6 @@ export class PptxView extends FileView {
     private isLegacyPpt(arrayBuffer: ArrayBuffer): boolean {
         if (arrayBuffer.byteLength < 8) return false;
         const uint8 = new Uint8Array(arrayBuffer.slice(0, 8));
-        // OLE2 复合文件特征魔数: D0 CF 11 E0 A1 B1 1A E1
         const ole2Magic = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
         return ole2Magic.every((byte, idx) => uint8[idx] === byte);
     }
@@ -147,7 +150,7 @@ export class PptxView extends FileView {
         const zoomOutBtn = zoomGroup.createEl('button', { cls: 'office-preview-btn', text: '➖' });
         this.zoomTextEl = zoomGroup.createEl('span', { cls: 'office-preview-zoom-text', text: '100%' });
         const zoomInBtn = zoomGroup.createEl('button', { cls: 'office-preview-btn', text: '➕' });
-        const zoomResetBtn = zoomGroup.createEl('button', { cls: 'office-preview-btn', text: '适应' });
+        const zoomResetBtn = zoomGroup.createEl('button', { cls: 'office-preview-btn', text: '适应宽度' });
 
         // 全屏演示按钮
         const fullscreenBtn = controls.createEl('button', { cls: 'office-preview-btn', text: '🖥️ 全屏' });
@@ -178,9 +181,9 @@ export class PptxView extends FileView {
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
-        // 3. PPT 渲染主视口与滚动包裹容器
-        const renderWrapper = container.createEl('div', { cls: 'office-preview-pptx-wrapper' });
-        const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在解析 PowerPoint 幻灯片...' });
+        // 3. PPT 渲染主视口与滚动包裹容器（强制仅允许纵向滚动条）
+        this.renderWrapperEl = container.createEl('div', { cls: 'office-preview-pptx-wrapper' });
+        const loadingEl = this.renderWrapperEl.createEl('div', { cls: 'office-preview-loading', text: '正在解析 PowerPoint 幻灯片...' });
 
         try {
             const arrayBuffer = await this.app.vault.readBinary(this.currentFile);
@@ -188,20 +191,18 @@ export class PptxView extends FileView {
 
             // 检测是否为旧版二进制 .ppt 文件
             if (this.isLegacyPpt(arrayBuffer)) {
-                this.renderLegacyPptNotice(renderWrapper);
+                this.renderLegacyPptNotice(this.renderWrapperEl);
                 return;
             }
 
             // 创建缩放层与内容挂载容器
-            this.pptxScaleWrapperEl = renderWrapper.createEl('div', { cls: 'pptx-scale-wrapper' });
+            this.pptxScaleWrapperEl = this.renderWrapperEl.createEl('div', { cls: 'pptx-scale-wrapper' });
             const pptxRenderEl = this.pptxScaleWrapperEl.createEl('div', { cls: 'pptx-render-mount' });
 
             // 初始化 PPTX 预览器
-            const baseWidth = 960;
-            const baseHeight = 540;
             this.previewer = init(pptxRenderEl, {
-                width: baseWidth,
-                height: baseHeight,
+                width: this.baseWidth,
+                height: this.baseHeight,
                 mode: this.viewMode
             });
 
@@ -225,18 +226,18 @@ export class PptxView extends FileView {
             };
 
             // 单页模式下的翻页逻辑
-            this.prevSlideBtn.onclick = () => this.goToPrevSlide();
-            this.nextSlideBtn.onclick = () => this.goToNextSlide();
+            if (this.prevSlideBtn) this.prevSlideBtn.onclick = () => this.goToPrevSlide();
+            if (this.nextSlideBtn) this.nextSlideBtn.onclick = () => this.goToNextSlide();
 
             // 缩放逻辑
-            zoomInBtn.onclick = () => this.setZoom(this.zoomLevel + 0.1);
-            zoomOutBtn.onclick = () => this.setZoom(this.zoomLevel - 0.1);
-            zoomResetBtn.onclick = () => this.autoFitZoom(renderWrapper);
+            zoomInBtn.onclick = () => this.setZoom(this.zoomLevel + 0.05);
+            zoomOutBtn.onclick = () => this.setZoom(this.zoomLevel - 0.05);
+            zoomResetBtn.onclick = () => this.autoFitZoom();
 
             // 全屏演示
             fullscreenBtn.onclick = () => {
                 if (!document.fullscreenElement) {
-                    renderWrapper.requestFullscreen().catch(err => {
+                    this.renderWrapperEl?.requestFullscreen().catch(err => {
                         console.warn('Fullscreen error:', err);
                     });
                 } else {
@@ -244,14 +245,14 @@ export class PptxView extends FileView {
                 }
             };
 
-            // 自动适配初始缩放比例
-            this.autoFitZoom(renderWrapper);
+            // 自动适配初始缩放比例，使其纵向铺满且无横向滚动条
+            this.autoFitZoom();
 
-            // 监听视口大小变化
+            // 监听视口大小变化，自适应调节
             this.resizeObserver = new ResizeObserver(() => {
-                this.autoFitZoom(renderWrapper);
+                this.autoFitZoom();
             });
-            this.resizeObserver.observe(renderWrapper);
+            this.resizeObserver.observe(this.renderWrapperEl);
 
             // 搜索逻辑注册
             const performPptxSearch = (query: string) => {
@@ -316,11 +317,10 @@ export class PptxView extends FileView {
 
         } catch (error) {
             loadingEl.remove();
-            // 如果解析失败，检测是否为 .ppt 给予智能引导
             if (this.currentFile.extension.toLowerCase() === 'ppt') {
-                this.renderLegacyPptNotice(renderWrapper);
+                this.renderLegacyPptNotice(this.renderWrapperEl);
             } else {
-                renderWrapper.createEl('div', {
+                this.renderWrapperEl.createEl('div', {
                     cls: 'office-preview-error',
                     text: `解析 PowerPoint 演示文稿失败: ${error instanceof Error ? error.message : String(error)}`
                 });
@@ -374,22 +374,32 @@ export class PptxView extends FileView {
         }
     }
 
+    /**
+     * 精确控制缩放，并同步更新容器宽高盒模型，彻底解决 CSS scale 带来的横向空白溢出
+     */
     private setZoom(newZoom: number): void {
-        this.zoomLevel = Math.max(0.3, Math.min(2.5, newZoom));
+        this.zoomLevel = Math.max(0.2, Math.min(2.0, newZoom));
         if (this.pptxScaleWrapperEl) {
             this.pptxScaleWrapperEl.style.transform = `scale(${this.zoomLevel})`;
+            // 消除 transform scale 导致的外层逻辑宽度留空或溢出
+            const scaledWidth = this.baseWidth * this.zoomLevel;
+            this.pptxScaleWrapperEl.style.width = `${scaledWidth}px`;
         }
         if (this.zoomTextEl) {
             this.zoomTextEl.setText(`${Math.round(this.zoomLevel * 100)}%`);
         }
     }
 
-    private autoFitZoom(wrapper: HTMLElement): void {
-        if (!this.pptxScaleWrapperEl) return;
-        const containerWidth = wrapper.clientWidth - 48;
-        const targetWidth = 960;
-        if (containerWidth > 0) {
-            const fitScale = Math.min(1.2, Math.max(0.4, containerWidth / targetWidth));
+    /**
+     * 自动调整缩放：按视口宽度自适应铺满 (Fit Width)，100% 消除横向滚动条
+     */
+    private autoFitZoom(): void {
+        if (!this.renderWrapperEl || !this.pptxScaleWrapperEl) return;
+        // 留出适度边距 (两边各 16px，共 32px)
+        const availableWidth = this.renderWrapperEl.clientWidth - 36;
+        if (availableWidth > 100) {
+            const fitScale = availableWidth / this.baseWidth;
+            // 自动计算铺满视口宽度的比例
             this.setZoom(fitScale);
         }
     }
