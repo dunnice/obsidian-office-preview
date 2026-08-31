@@ -375,7 +375,7 @@ mark.docx-search-highlight.is-active {
     cursor: not-allowed;
 }
 
-/* PowerPoint (.pptx) 容器与完全类似于 Word 的自然平铺长卷排版 */
+/* PowerPoint (.pptx) 容器与完全类似于 Word 的自然全屏平铺长卷排版 */
 .office-preview-pptx-container {
     display: flex;
     flex-direction: column;
@@ -390,7 +390,7 @@ mark.docx-search-highlight.is-active {
     flex: 1;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    padding: 24px;
+    padding: 32px 24px;
     box-sizing: border-box;
     width: 100%;
     height: 100%;
@@ -407,28 +407,39 @@ mark.docx-search-highlight.is-active {
 }
 
 .pptx-render-mount {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: block;
     width: 100%;
-    max-width: 1020px;
     margin: 0 auto;
-    gap: 32px;
 }
 
-/* 每张 PPT 幻灯片像 Word 卡片一样直接向下垂直铺开，绝不出现定高限制 */
-.pptx-render-mount > div,
-.pptx-render-mount .slide,
-.pptx-render-mount .slide-wrapper,
-.pptx-render-mount .pptx-slide {
+/* 彻底覆盖 pptx-preview 内置写死的黑色背景、内联高度与局域滚动条 */
+.pptx-preview-wrapper {
+    background: transparent !important;
+    background-color: transparent !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
     width: 100% !important;
-    max-width: 100% !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+    max-width: 1020px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 32px !important;
+    position: relative !important;
+}
+
+/* 每张 PPT 幻灯片卡片自适应居中，像 Word 页面一样一页接一页向下平铺 */
+.pptx-preview-slide-wrapper {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
     border-radius: 6px !important;
     background-color: #ffffff !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
     margin: 0 auto !important;
+    max-width: 100% !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
 }
 
 /* PPT 搜索高亮 */

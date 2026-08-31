@@ -6,7 +6,6 @@ export const VIEW_TYPE_PPTX = 'pptx-preview-view';
 export class PptxView extends FileView {
     private currentFile: TFile | null = null;
     private previewer: any = null;
-    private resizeObserver: ResizeObserver | null = null;
 
     // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
@@ -47,10 +46,6 @@ export class PptxView extends FileView {
     }
 
     private cleanup(): void {
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-            this.resizeObserver = null;
-        }
         if (this.previewer && typeof this.previewer.destroy === 'function') {
             try {
                 this.previewer.destroy();
@@ -90,7 +85,7 @@ export class PptxView extends FileView {
         container.empty();
         container.addClass('office-preview-pptx-container');
 
-        // 1. 顶部主工具栏（与 Word 保持一致的极简美观规范）
+        // 1. 顶部主工具栏
         const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
 
         const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
@@ -138,7 +133,7 @@ export class PptxView extends FileView {
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
-        // 3. 类似 Word 的自然平铺长卷视口包裹容器
+        // 3. 类似 Word 的自然长卷滚动视口
         const renderWrapper = container.createEl('div', { cls: 'office-preview-pptx-wrapper' });
         const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在解析并流式平铺 PowerPoint 幻灯片...' });
 
@@ -151,18 +146,16 @@ export class PptxView extends FileView {
                 return;
             }
 
-            // 内容挂载容器（完全按照 Word 的居中流式卡片设计）
+            // 内容挂载容器
             const pptxRenderEl = renderWrapper.createEl('div', { cls: 'pptx-render-mount' });
 
-            // 动态计算适合屏幕宽度的分辨率基准（如 1000px 宽，16:9 比例高）
-            const wrapperWidth = Math.max(renderWrapper.clientWidth - 48, 600);
-            const renderWidth = Math.min(wrapperWidth, 1000);
-            const renderHeight = Math.round(renderWidth * (9 / 16));
+            // 动态计算适合视口宽度的单页渲染基准宽（不设置 height，彻底禁用定高，让高度按幻灯片张数自然向下铺开）
+            const availableWidth = Math.max(renderWrapper.clientWidth - 64, 600);
+            const renderWidth = Math.min(availableWidth, 980);
 
-            // 初始化预览器：纯粹的 list 模式向下自然流式平铺
+            // 初始化预览器：不传递 height，这样 pptx-preview 不会定高，每张幻灯片一页页平铺向下！
             this.previewer = init(pptxRenderEl, {
                 width: renderWidth,
-                height: renderHeight,
                 mode: 'list'
             });
 
