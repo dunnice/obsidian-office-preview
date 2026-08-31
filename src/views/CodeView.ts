@@ -23,6 +23,7 @@ export class CodeView extends FileView {
     private rawContent: string = '';
     private formattedContent: string = '';
     private isJsonFormatted: boolean = true;
+    private isWordWrap: boolean = true; // 默认开启自动换行
     private language: string = 'plaintext';
     private isOutlineVisible: boolean = true;
     private outlineTree: OutlineTreeNode[] = [];
@@ -172,6 +173,12 @@ export class CodeView extends FileView {
             });
         }
 
+        // 自动换行切换按钮
+        const wrapToggleBtn = controls.createEl('button', {
+            cls: `office-preview-btn ${this.isWordWrap ? 'is-active' : ''}`,
+            text: this.isWordWrap ? '↩️ 换行开启' : '↩️ 换行关闭'
+        });
+
         // 大纲面板切换按钮 (仅对 json, yaml 生效)
         let toggleOutlineBtn: HTMLButtonElement | null = null;
         const supportsOutline = this.language === 'json' || this.language === 'yaml';
@@ -211,12 +218,12 @@ export class CodeView extends FileView {
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
-        // 3. 代码双栏主视口布局 (左侧内容 60% : 右侧大纲 40%)
+        // 3. 代码双栏主视口布局 (左侧内容 70% : 右侧大纲 30% -> 7:3 比例)
         const mainBodyEl = container.createEl('div', { cls: 'office-preview-code-body' });
         
         const showOutlineInitially = supportsOutline && this.isOutlineVisible;
         const renderWrapper = mainBodyEl.createEl('div', {
-            cls: `office-preview-code-wrapper ${!showOutlineInitially ? 'is-full-width' : ''}`
+            cls: `office-preview-code-wrapper ${!showOutlineInitially ? 'is-full-width' : ''} ${this.isWordWrap ? 'is-word-wrap' : ''}`
         });
         const outlinePane = mainBodyEl.createEl('div', {
             cls: `office-preview-outline-pane ${!showOutlineInitially ? 'is-hidden' : ''}`
@@ -248,12 +255,20 @@ export class CodeView extends FileView {
 
             this.renderSyntaxTree(codeMount, displayCode);
 
-            // 渲染右侧支持折叠展开的层级大纲
+            // 渲染右侧 30% 层级大纲
             if (supportsOutline) {
                 this.renderOutlineTree(outlinePane, renderWrapper, displayCode);
             }
 
-            // 大纲按钮切换事件 (保持 6:4 比例或一键 100% 全宽)
+            // 换行模式切换事件
+            wrapToggleBtn.onclick = () => {
+                this.isWordWrap = !this.isWordWrap;
+                wrapToggleBtn.toggleClass('is-active', this.isWordWrap);
+                wrapToggleBtn.setText(this.isWordWrap ? '↩️ 换行开启' : '↩️ 换行关闭');
+                renderWrapper.toggleClass('is-word-wrap', this.isWordWrap);
+            };
+
+            // 大纲按钮切换事件 (保持 7:3 比例或一键 100% 全宽)
             if (toggleOutlineBtn) {
                 toggleOutlineBtn.onclick = () => {
                     this.isOutlineVisible = !this.isOutlineVisible;

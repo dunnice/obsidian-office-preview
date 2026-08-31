@@ -513,7 +513,7 @@ mark.pptx-search-highlight.is-active {
     position: relative;
 }
 
-/* 双栏主视口布局：左侧代码 (60%) + 右侧大纲 (40%) -> 6:4 黄金占比 */
+/* 双栏主视口布局：左侧代码 (70%) + 右侧大纲 (30%) -> 7:3 黄金占比 */
 .office-preview-code-body {
     display: flex;
     flex: 1 1 auto;
@@ -524,10 +524,10 @@ mark.pptx-search-highlight.is-active {
     position: relative;
 }
 
-/* 左侧代码视口 (60%) */
+/* 左侧代码视口 (70%) */
 .office-preview-code-wrapper {
-    flex: 6 1 60%;
-    width: 60%;
+    flex: 7 1 70%;
+    width: 70%;
     min-width: 0;
     min-height: 0;
     overflow: auto;
@@ -545,12 +545,12 @@ mark.pptx-search-highlight.is-active {
     max-width: 100% !important;
 }
 
-/* 右侧结构大纲面板 (40%) */
+/* 右侧结构大纲面板 (30%) */
 .office-preview-outline-pane {
-    flex: 4 1 40%;
-    width: 40%;
+    flex: 3 1 30%;
+    width: 30%;
     min-width: 0;
-    max-width: 40%;
+    max-width: 30%;
     height: 100%;
     border-left: 1px solid var(--border-color);
     background-color: var(--background-secondary);
@@ -694,7 +694,7 @@ mark.pptx-search-highlight.is-active {
     text-overflow: ellipsis;
     white-space: nowrap;
     flex-shrink: 0;
-    max-width: 140px;
+    max-width: 120px;
 }
 
 /* 折叠时数量角标 */
@@ -720,7 +720,7 @@ mark.pptx-search-highlight.is-active {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 160px;
+    max-width: 120px;
     opacity: 0.85;
 }
 
@@ -772,9 +772,9 @@ mark.pptx-search-highlight.is-active {
 }
 
 .code-line-number {
-    width: 50px;
-    min-width: 50px;
-    padding: 2px 14px 2px 8px;
+    width: 48px;
+    min-width: 48px;
+    padding: 2px 12px 2px 6px;
     text-align: right;
     color: var(--text-faint);
     user-select: none;
@@ -812,6 +812,47 @@ mark.pptx-search-highlight.is-active {
     padding: 0 !important;
     background: transparent !important;
     color: inherit;
+}
+
+/* =========================================================
+ * 自动换行 (Word Wrap) 模式
+ * ========================================================= */
+.office-preview-code-wrapper.is-word-wrap {
+    overflow-x: hidden !important;
+}
+
+.office-preview-code-wrapper.is-word-wrap .code-viewer-container {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
+.office-preview-code-wrapper.is-word-wrap .code-table {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: fixed !important;
+}
+
+.office-preview-code-wrapper.is-word-wrap .code-line-number {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    box-sizing: border-box !important;
+}
+
+.office-preview-code-wrapper.is-word-wrap .code-line-content {
+    width: calc(100% - 48px) !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    box-sizing: border-box !important;
+}
+
+.office-preview-code-wrapper.is-word-wrap .code-line-content pre,
+.office-preview-code-wrapper.is-word-wrap .code-line-content code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
 }
 
 /* Prism 语法高亮着色（适配暗黑/明亮主题） */
