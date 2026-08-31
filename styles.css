@@ -218,7 +218,8 @@ mark.docx-search-highlight.is-active {
 }
 
 .office-preview-docx-wrapper {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
     padding: 24px;
     box-sizing: border-box;
@@ -272,7 +273,7 @@ mark.docx-search-highlight.is-active {
 }
 
 .office-preview-xlsx-wrapper {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     position: relative;
     overflow: auto;
@@ -388,7 +389,7 @@ mark.docx-search-highlight.is-active {
 
 .office-preview-pptx-wrapper {
     flex: 1 1 auto;
-    min-height: 0; /* 关键：允许 flex 容器根据内容自适应产生滚动条 */
+    min-height: 0;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding: 32px 24px;
@@ -410,7 +411,6 @@ mark.docx-search-highlight.is-active {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 980px;
     margin: 0 auto;
     min-height: min-content;
 }
@@ -420,7 +420,6 @@ mark.docx-search-highlight.is-active {
     background: transparent !important;
     background-color: transparent !important;
     width: 100% !important;
-    max-width: 100% !important;
     height: auto !important;
     min-height: min-content !important;
     overflow: visible !important;

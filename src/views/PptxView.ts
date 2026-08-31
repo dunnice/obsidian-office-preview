@@ -89,7 +89,7 @@ export class PptxView extends FileView {
         const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
 
         const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
-        titleContainer.createEl('span', {
+        const titleEl = titleContainer.createEl('span', {
             cls: 'office-preview-title',
             text: `📽️ ${this.currentFile.name}`
         });
@@ -149,13 +149,31 @@ export class PptxView extends FileView {
             // 内容挂载容器
             const pptxRenderEl = renderWrapper.createEl('div', { cls: 'pptx-render-mount' });
 
-            // 采用标准 960 宽度的 list 模式，不传 height（让每张 slide 自然向下累加高度，撑开纵向滚动条）
+            // 动态计算适合视口宽度的单页渲染基准宽（保证在侧边栏或主工作区都能完美适配）
+            const wrapperWidth = renderWrapper.clientWidth > 100 ? renderWrapper.clientWidth - 48 : 960;
+            const renderWidth = Math.min(Math.max(wrapperWidth, 600), 960);
+
+            // 初始化预览器
             this.previewer = init(pptxRenderEl, {
-                width: 960,
+                width: renderWidth,
                 mode: 'list'
             });
 
-            await this.previewer.preview(arrayBuffer);
+            // 1. 先通过 load 解析 PPTX 数据对象
+            const pptxDoc = await this.previewer.load(arrayBuffer);
+            const slideCount = pptxDoc?.slides?.length || 0;
+            titleEl.setText(`📽️ ${this.currentFile.name} (共 ${slideCount} 页)`);
+
+            // 2. 逐页安全平铺渲染，防止单页异常中断后续所有页面的渲染
+            if (this.previewer.htmlRender && slideCount > 0) {
+                for (let i = 0; i < slideCount; i++) {
+                    try {
+                        this.previewer.htmlRender.renderSlide(i);
+                    } catch (slideErr) {
+                        console.warn(`渲染第 ${i + 1} 页幻灯片时出现警告:`, slideErr);
+                    }
+                }
+            }
 
             // 全屏演示逻辑
             fullscreenBtn.onclick = () => {
