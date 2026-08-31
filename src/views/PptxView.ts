@@ -133,7 +133,7 @@ export class PptxView extends FileView {
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
-        // 3. 类似 Word 的自然长卷滚动视口
+        // 3. 类似 Word 的自然平铺长卷视口包裹容器
         const renderWrapper = container.createEl('div', { cls: 'office-preview-pptx-wrapper' });
         const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在解析并流式平铺 PowerPoint 幻灯片...' });
 
@@ -149,13 +149,9 @@ export class PptxView extends FileView {
             // 内容挂载容器
             const pptxRenderEl = renderWrapper.createEl('div', { cls: 'pptx-render-mount' });
 
-            // 动态计算适合视口宽度的单页渲染基准宽（不设置 height，彻底禁用定高，让高度按幻灯片张数自然向下铺开）
-            const availableWidth = Math.max(renderWrapper.clientWidth - 64, 600);
-            const renderWidth = Math.min(availableWidth, 980);
-
-            // 初始化预览器：不传递 height，这样 pptx-preview 不会定高，每张幻灯片一页页平铺向下！
+            // 采用标准 960 宽度的 list 模式，不传 height（让每张 slide 自然向下累加高度，撑开纵向滚动条）
             this.previewer = init(pptxRenderEl, {
-                width: renderWidth,
+                width: 960,
                 mode: 'list'
             });
 
@@ -226,6 +222,7 @@ export class PptxView extends FileView {
             };
 
         } catch (error) {
+            console.error('Error rendering PPTX:', error);
             loadingEl.remove();
             if (this.currentFile.extension.toLowerCase() === 'ppt') {
                 this.renderLegacyPptNotice(renderWrapper);
