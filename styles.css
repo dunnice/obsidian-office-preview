@@ -76,7 +76,7 @@
 }
 
 .office-preview-search-bar.is-hidden {
-    display: none !important;
+    display: none;
 }
 
 .office-preview-search-input {
@@ -121,27 +121,27 @@
 
 /* Word 文档搜索高亮 */
 mark.docx-search-highlight {
-    background-color: rgba(255, 226, 89, 0.5) !important;
-    color: inherit !important;
+    background-color: rgba(255, 226, 89, 0.5);
+    color: inherit;
     padding: 1px 2px;
     border-radius: 2px;
 }
 
 mark.docx-search-highlight.is-active {
-    background-color: #ff9800 !important;
-    color: #ffffff !important;
+    background-color: #ff9800;
+    color: #ffffff;
     font-weight: bold;
     box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.5);
 }
 
 /* Excel 单元格搜索高亮 */
 .excel-cell.excel-search-highlight {
-    background-color: rgba(255, 226, 89, 0.4) !important;
+    background-color: rgba(255, 226, 89, 0.4);
 }
 
 .excel-cell.excel-search-highlight.is-active-match {
-    background-color: #ff9800 !important;
-    color: #ffffff !important;
+    background-color: #ff9800;
+    color: #ffffff;
     font-weight: bold;
     outline: 2px solid #e65100;
 }
@@ -235,21 +235,21 @@ mark.docx-search-highlight.is-active {
 }
 
 .docx-render-body .docx-wrapper {
-    background-color: transparent !important;
-    padding: 0 !important;
-    font-size: initial !important;
-    width: 100% !important;
+    background-color: transparent;
+    padding: 0;
+    font-size: initial;
+    width: 100%;
 }
 
 .docx-render-body section.docx {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-    margin-bottom: 24px !important;
-    background-color: var(--background-primary) !important;
-    color: var(--text-normal) !important;
-    border-radius: 6px !important;
-    padding: 40px 50px !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+    border-radius: 6px;
+    padding: 40px 50px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .docx-render-body section.docx p,
@@ -390,8 +390,8 @@ mark.docx-search-highlight.is-active {
 .office-preview-pptx-wrapper {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 32px 24px;
     box-sizing: border-box;
     width: 100%;
@@ -403,7 +403,7 @@ mark.docx-search-highlight.is-active {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden !important;
+    overflow: hidden;
 }
 
 .pptx-render-mount {
@@ -417,43 +417,43 @@ mark.docx-search-highlight.is-active {
 
 /* 彻底清除并重置 pptx-preview 库自带的黑色背景与内联定高 */
 .pptx-preview-wrapper {
-    background: transparent !important;
-    background-color: transparent !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: min-content !important;
-    overflow: visible !important;
-    overflow-y: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 32px !important;
-    margin: 0 auto !important;
-    position: relative !important;
+    background: transparent;
+    background-color: transparent;
+    width: 100%;
+    height: auto;
+    min-height: min-content;
+    overflow: visible;
+    overflow-y: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    margin: 0 auto;
+    position: relative;
 }
 
 /* 每张 PPT 幻灯片卡片像 Word 页面一样一页接一页顺畅向下平铺 */
 .pptx-preview-slide-wrapper {
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
-    border-radius: 6px !important;
-    background-color: #ffffff !important;
-    margin: 0 auto !important;
-    position: relative !important;
-    flex-shrink: 0 !important;
-    box-sizing: content-box !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    background-color: #ffffff;
+    margin: 0 auto;
+    position: relative;
+    flex-shrink: 0;
+    box-sizing: content-box;
 }
 
 /* PPT 搜索高亮 */
 mark.pptx-search-highlight {
-    background-color: rgba(255, 226, 89, 0.6) !important;
-    color: #000000 !important;
+    background-color: rgba(255, 226, 89, 0.6);
+    color: #000000;
     padding: 1px 2px;
     border-radius: 2px;
 }
 
 mark.pptx-search-highlight.is-active {
-    background-color: #ff9800 !important;
-    color: #ffffff !important;
+    background-color: #ff9800;
+    color: #ffffff;
     font-weight: bold;
     box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6);
 }
@@ -540,9 +540,9 @@ mark.pptx-search-highlight.is-active {
 
 /* 当右侧大纲折叠时，代码视口铺满 100% */
 .office-preview-code-wrapper.is-full-width {
-    flex: 1 1 100% !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* 右侧结构大纲面板 (30%) */
@@ -562,7 +562,7 @@ mark.pptx-search-highlight.is-active {
 }
 
 .office-preview-outline-pane.is-hidden {
-    display: none !important;
+    display: none;
 }
 
 .outline-header {
@@ -632,7 +632,7 @@ mark.pptx-search-highlight.is-active {
 }
 
 .outline-children-group.is-hidden {
-    display: none !important;
+    display: none;
 }
 
 .outline-item {
@@ -710,7 +710,7 @@ mark.pptx-search-highlight.is-active {
 }
 
 .outline-collapsed-badge.is-hidden {
-    display: none !important;
+    display: none;
 }
 
 .outline-item-preview {
@@ -734,7 +734,7 @@ mark.pptx-search-highlight.is-active {
 
 /* 点击大纲后的代码行聚焦脉冲动画 */
 .code-line-tr.is-focused-line {
-    background-color: rgba(255, 152, 0, 0.25) !important;
+    background-color: rgba(255, 152, 0, 0.25);
     outline: 1px dashed var(--interactive-accent);
     transition: background-color 0.2s ease;
 }
@@ -795,9 +795,9 @@ mark.pptx-search-highlight.is-active {
 .code-line-content pre {
     margin: 0;
     padding: 0;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+    background: transparent;
+    border: none;
+    box-shadow: none;
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
@@ -809,8 +809,8 @@ mark.pptx-search-highlight.is-active {
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
-    padding: 0 !important;
-    background: transparent !important;
+    padding: 0;
+    background: transparent;
     color: inherit;
 }
 
@@ -818,41 +818,41 @@ mark.pptx-search-highlight.is-active {
  * 自动换行 (Word Wrap) 模式
  * ========================================================= */
 .office-preview-code-wrapper.is-word-wrap {
-    overflow-x: hidden !important;
+    overflow-x: hidden;
 }
 
 .office-preview-code-wrapper.is-word-wrap .code-viewer-container {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
 }
 
 .office-preview-code-wrapper.is-word-wrap .code-table {
-    width: 100% !important;
-    min-width: 100% !important;
-    table-layout: fixed !important;
+    width: 100%;
+    min-width: 100%;
+    table-layout: fixed;
 }
 
 .office-preview-code-wrapper.is-word-wrap .code-line-number {
-    width: 48px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
-    box-sizing: border-box !important;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    box-sizing: border-box;
 }
 
 .office-preview-code-wrapper.is-word-wrap .code-line-content {
-    width: calc(100% - 48px) !important;
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-    overflow-wrap: anywhere !important;
-    box-sizing: border-box !important;
+    width: calc(100% - 48px);
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
 }
 
 .office-preview-code-wrapper.is-word-wrap .code-line-content pre,
 .office-preview-code-wrapper.is-word-wrap .code-line-content code {
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-    overflow-wrap: anywhere !important;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 /* Prism 语法高亮着色（适配暗黑/明亮主题） */
@@ -971,15 +971,15 @@ mark.pptx-search-highlight.is-active {
 
 /* Code 搜索高亮 */
 mark.code-search-highlight {
-    background-color: rgba(255, 226, 89, 0.6) !important;
-    color: inherit !important;
+    background-color: rgba(255, 226, 89, 0.6);
+    color: inherit;
     padding: 1px 2px;
     border-radius: 2px;
 }
 
 mark.code-search-highlight.is-active {
-    background-color: #ff9800 !important;
-    color: #ffffff !important;
+    background-color: #ff9800;
+    color: #ffffff;
     font-weight: bold;
     box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6);
 }
