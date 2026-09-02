@@ -1,9 +1,9 @@
 {
 	"id": "office-preview",
 	"name": "Office Preview",
-	"version": "1.3.1",
+	"version": "1.3.2",
 	"minAppVersion": "0.15.0",
-	"description": "Preview Word (.docx), Excel (.xlsx, .xls, .csv), PowerPoint (.pptx, .ppt), JSON, SQL, and YAML files natively in Obsidian.",
+	"description": "Preview Word (.docx), Excel (.xlsx, .xls, .csv), PowerPoint (.pptx, .ppt), JSON, SQL, and YAML files natively.",
 	"author": "dunnice",
 	"authorUrl": "https://github.com/dunnice",
 	"isDesktopOnly": true

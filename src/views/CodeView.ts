@@ -137,10 +137,10 @@ export class CodeView extends FileView {
         container.addClass('office-preview-code-container');
 
         // 1. 顶部主工具栏
-        const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
+        const toolbar = container.createDiv({ cls: 'office-preview-toolbar' });
 
-        const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
-        titleContainer.createEl('span', {
+        const titleContainer = toolbar.createDiv({ cls: 'office-preview-title-container' });
+        titleContainer.createSpan({
             cls: 'office-preview-title',
             text: `${this.getFileIconEmoji()} ${this.currentFile.name}`
         });
@@ -148,21 +148,21 @@ export class CodeView extends FileView {
         if (this.currentFile.stat) {
             if (this.currentFile.stat.mtime) {
                 const timeStr = this.formatDate(this.currentFile.stat.mtime);
-                titleContainer.createEl('span', {
+                titleContainer.createSpan({
                     cls: 'office-preview-mtime',
                     text: `修改时间: ${timeStr}`
                 });
             }
             if (this.currentFile.stat.size) {
                 const sizeStr = this.formatFileSize(this.currentFile.stat.size);
-                titleContainer.createEl('span', {
+                titleContainer.createSpan({
                     cls: 'office-preview-mtime',
                     text: `(${sizeStr})`
                 });
             }
         }
 
-        const controls = toolbar.createEl('div', { cls: 'office-preview-controls' });
+        const controls = toolbar.createDiv({ cls: 'office-preview-controls' });
 
         // JSON 专属：格式化 / 紧凑切换按钮
         let jsonToggleBtn: HTMLButtonElement | null = null;
@@ -204,7 +204,7 @@ export class CodeView extends FileView {
         reloadBtn.onclick = () => this.renderCode();
 
         // 2. 悬浮搜索控制面板
-        this.searchContainerEl = container.createEl('div', { cls: 'office-preview-search-bar is-hidden' });
+        this.searchContainerEl = container.createDiv({ cls: 'office-preview-search-bar is-hidden' });
 
         this.searchInputEl = this.searchContainerEl.createEl('input', {
             cls: 'office-preview-search-input',
@@ -212,24 +212,24 @@ export class CodeView extends FileView {
             placeholder: `搜索 ${this.language.toUpperCase()} 内容 (Cmd+F)...`
         });
 
-        this.searchCountEl = this.searchContainerEl.createEl('span', { cls: 'office-preview-search-count', text: '0 / 0' });
+        this.searchCountEl = this.searchContainerEl.createSpan({ cls: 'office-preview-search-count', text: '0 / 0' });
 
         const prevMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔼' });
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
         // 3. 代码双栏主视口布局 (左侧内容 70% : 右侧大纲 30% -> 7:3 比例)
-        const mainBodyEl = container.createEl('div', { cls: 'office-preview-code-body' });
+        const mainBodyEl = container.createDiv({ cls: 'office-preview-code-body' });
         
         const showOutlineInitially = supportsOutline && this.isOutlineVisible;
-        const renderWrapper = mainBodyEl.createEl('div', {
+        const renderWrapper = mainBodyEl.createDiv({
             cls: `office-preview-code-wrapper ${!showOutlineInitially ? 'is-full-width' : ''} ${this.isWordWrap ? 'is-word-wrap' : ''}`
         });
-        const outlinePane = mainBodyEl.createEl('div', {
+        const outlinePane = mainBodyEl.createDiv({
             cls: `office-preview-outline-pane ${!showOutlineInitially ? 'is-hidden' : ''}`
         });
 
-        const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: `正在读取 ${this.language.toUpperCase()} 内容...` });
+        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: `正在读取 ${this.language.toUpperCase()} 内容...` });
 
         try {
             this.rawContent = await this.app.vault.read(this.currentFile);
@@ -241,13 +241,12 @@ export class CodeView extends FileView {
                     const parsed = JSON.parse(this.rawContent);
                     this.formattedContent = JSON.stringify(parsed, null, 2);
                 } catch (e) {
-                    console.warn('JSON parse error (displaying raw content):', e);
                     this.formattedContent = this.rawContent;
                 }
             }
 
             // 渲染代码 DOM 树
-            const codeMount = renderWrapper.createEl('div', { cls: 'code-render-mount' });
+            const codeMount = renderWrapper.createDiv({ cls: 'code-render-mount' });
             
             const displayCode = (this.language === 'json' && this.isJsonFormatted)
                 ? this.formattedContent
@@ -305,7 +304,7 @@ export class CodeView extends FileView {
                     copyBtn.setText('✓ 已复制');
                     setTimeout(() => copyBtn.setText('📋 复制'), 1800);
                 } catch (err) {
-                    console.error('Failed to copy text:', err);
+                    // ignore
                 }
             };
 
@@ -364,7 +363,7 @@ export class CodeView extends FileView {
 
         } catch (error) {
             loadingEl.remove();
-            renderWrapper.createEl('div', {
+            renderWrapper.createDiv({
                 cls: 'office-preview-error',
                 text: `读取文件失败: ${error instanceof Error ? error.message : String(error)}`
             });
@@ -372,7 +371,7 @@ export class CodeView extends FileView {
     }
 
     /**
-     * 渲染带行号与语法高亮的 DOM
+     * 渲染带行号与语法高亮的 DOM (完全杜绝 unsafe innerHTML 赋值)
      */
     private renderSyntaxTree(mount: HTMLElement, codeText: string): void {
         const grammar = Prism.languages[this.language] || Prism.languages.plaintext;
@@ -380,16 +379,18 @@ export class CodeView extends FileView {
 
         const lines = highlightedHtml.split('\n');
 
-        const codeContainer = mount.createEl('div', { cls: 'code-viewer-container' });
+        const codeContainer = mount.createDiv({ cls: 'code-viewer-container' });
         const table = codeContainer.createEl('table', { cls: 'code-table' });
         const tbody = table.createEl('tbody');
+
+        const domParser = new DOMParser();
 
         lines.forEach((lineHtml, idx) => {
             const tr = tbody.createEl('tr', { cls: 'code-line-tr' });
             tr.setAttribute('data-line-number', String(idx + 1));
             
             // 行号单元格
-            const lineNumTd = tr.createEl('td', {
+            tr.createEl('td', {
                 cls: 'code-line-number',
                 text: String(idx + 1)
             });
@@ -399,8 +400,15 @@ export class CodeView extends FileView {
             const pre = codeTd.createEl('pre', { cls: `language-${this.language}` });
             const code = pre.createEl('code', { cls: `language-${this.language}` });
             
-            // 空行处理
-            code.innerHTML = lineHtml || '&nbsp;';
+            // 安全节点渲染，完全避免直接 innerHTML 赋值
+            if (!lineHtml) {
+                code.setText('\u00A0');
+            } else {
+                const parsedDoc = domParser.parseFromString(lineHtml, 'text/html');
+                while (parsedDoc.body.firstChild) {
+                    code.appendChild(parsedDoc.body.firstChild);
+                }
+            }
         });
     }
 
@@ -417,13 +425,13 @@ export class CodeView extends FileView {
         const totalNodes = this.countTreeNodes(this.outlineTree);
 
         // 大纲顶部工具栏
-        const header = outlinePane.createEl('div', { cls: 'outline-header' });
-        const headerLeft = header.createEl('div', { cls: 'outline-header-left' });
-        headerLeft.createEl('span', { cls: 'outline-title', text: '🗂️ 层级大纲' });
-        headerLeft.createEl('span', { cls: 'outline-count', text: `${totalNodes} 项` });
+        const header = outlinePane.createDiv({ cls: 'outline-header' });
+        const headerLeft = header.createDiv({ cls: 'outline-header-left' });
+        headerLeft.createSpan({ cls: 'outline-title', text: '🗂️ 层级大纲' });
+        headerLeft.createSpan({ cls: 'outline-count', text: `${totalNodes} 项` });
 
         // 快速折叠与展开按钮组
-        const headerActions = header.createEl('div', { cls: 'outline-header-actions' });
+        const headerActions = header.createDiv({ cls: 'outline-header-actions' });
         const collapseAllBtn = headerActions.createEl('button', {
             cls: 'outline-action-icon-btn',
             text: '🔼',
@@ -436,17 +444,17 @@ export class CodeView extends FileView {
         });
 
         if (this.outlineTree.length === 0) {
-            const emptyEl = outlinePane.createEl('div', { cls: 'outline-empty' });
+            const emptyEl = outlinePane.createDiv({ cls: 'outline-empty' });
             emptyEl.setText('未检测到层级结构');
             return;
         }
 
-        const listEl = outlinePane.createEl('div', { cls: 'outline-list' });
+        const listEl = outlinePane.createDiv({ cls: 'outline-list' });
 
         // 递归渲染节点 DOM
         const renderNodesRecursive = (nodes: OutlineTreeNode[], parentContainer: HTMLElement) => {
             nodes.forEach((node) => {
-                const nodeRowEl = parentContainer.createEl('div', {
+                const nodeRowEl = parentContainer.createDiv({
                     cls: `outline-item level-${Math.min(node.level, 8)}`
                 });
                 nodeRowEl.style.paddingLeft = `${node.level * 14 + 8}px`;
@@ -454,38 +462,38 @@ export class CodeView extends FileView {
                 const hasChildren = node.children && node.children.length > 0;
 
                 // 折叠/展开小箭头 (父节点可点击折叠)
-                const arrowEl = nodeRowEl.createEl('span', {
+                const arrowEl = nodeRowEl.createSpan({
                     cls: `outline-toggle-arrow ${hasChildren ? 'has-children' : 'is-leaf'} ${node.isCollapsed ? 'is-collapsed' : ''}`,
                     text: hasChildren ? (node.isCollapsed ? '▶' : '▼') : ' '
                 });
 
                 // 类型图标
-                const iconEl = nodeRowEl.createEl('span', { cls: 'outline-item-icon' });
+                const iconEl = nodeRowEl.createSpan({ cls: 'outline-item-icon' });
                 if (node.type === 'object') iconEl.setText('{ }');
                 else if (node.type === 'array') iconEl.setText('[ ]');
                 else iconEl.setText('•');
 
                 // 键名
-                nodeRowEl.createEl('span', { cls: 'outline-item-key', text: node.key });
+                nodeRowEl.createSpan({ cls: 'outline-item-key', text: node.key });
 
                 // 折叠时显示包含的子节点数量提示
-                const collapsedBadgeEl = nodeRowEl.createEl('span', {
+                const collapsedBadgeEl = nodeRowEl.createSpan({
                     cls: `outline-collapsed-badge ${node.isCollapsed ? '' : 'is-hidden'}`,
                     text: `{ ${node.children.length} }`
                 });
 
                 // 预览值/提示
                 if (node.preview && !hasChildren) {
-                    nodeRowEl.createEl('span', { cls: 'outline-item-preview', text: node.preview });
+                    nodeRowEl.createSpan({ cls: 'outline-item-preview', text: node.preview });
                 }
 
                 // 行号标签
-                nodeRowEl.createEl('span', { cls: 'outline-item-line', text: `:${node.lineNumber}` });
+                nodeRowEl.createSpan({ cls: 'outline-item-line', text: `:${node.lineNumber}` });
 
                 // 子节点容器
                 let childrenContainer: HTMLElement | null = null;
                 if (hasChildren) {
-                    childrenContainer = parentContainer.createEl('div', {
+                    childrenContainer = parentContainer.createDiv({
                         cls: `outline-children-group ${node.isCollapsed ? 'is-hidden' : ''}`
                     });
                     renderNodesRecursive(node.children, childrenContainer);
@@ -688,7 +696,7 @@ export class CodeView extends FileView {
                 }
             }
         } catch (e) {
-            console.error('Failed to open file with default app:', e);
+            // ignore
         }
     }
 
@@ -782,9 +790,10 @@ export class CodeView extends FileView {
                 if (index > lastIndex) {
                     fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
                 }
-                const mark = document.createElement('mark');
-                mark.className = 'code-search-highlight';
-                mark.textContent = text.substring(index, index + length);
+                const mark = createEl('mark', {
+                    cls: 'code-search-highlight',
+                    text: text.substring(index, index + length)
+                });
                 fragment.appendChild(mark);
                 lastIndex = index + length;
             });

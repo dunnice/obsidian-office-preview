@@ -271,9 +271,10 @@ export class DocxView extends FileView {
                 if (index > lastIndex) {
                     fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
                 }
-                const mark = document.createElement('mark');
-                mark.className = 'docx-search-highlight';
-                mark.textContent = text.substring(index, index + length);
+                const mark = createEl('mark', {
+                    cls: 'office-preview-search-highlight',
+                    text: text.substring(index, index + length)
+                });
                 fragment.appendChild(mark);
                 lastIndex = index + length;
             });

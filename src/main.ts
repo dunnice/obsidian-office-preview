@@ -6,8 +6,6 @@ import { CodeView, VIEW_TYPE_CODE } from './views/CodeView';
 
 export default class OfficePreviewPlugin extends Plugin {
     async onload() {
-        console.log('加载 Obsidian Office Preview 插件...');
-
         // 注册 Word 视图与扩展名绑定
         this.registerView(
             VIEW_TYPE_DOCX,
@@ -58,6 +56,5 @@ export default class OfficePreviewPlugin extends Plugin {
     }
 
     onunload() {
-        console.log('卸载 Obsidian Office Preview 插件');
     }
 }
