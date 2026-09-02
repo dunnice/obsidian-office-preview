@@ -160,8 +160,8 @@ export class PptxView extends FileView {
             });
 
             // 1. 先通过 load 解析 PPTX 数据对象
-            const pptxDoc = await this.previewer.load(arrayBuffer);
-            const slideCount = pptxDoc?.slides?.length || 0;
+            const pptxDoc = (await this.previewer.load(arrayBuffer)) as { slides?: unknown[] } | null;
+            const slideCount = pptxDoc?.slides?.length ?? 0;
             titleEl.setText(`📽️ ${this.currentFile.name} (共 ${slideCount} 页)`);
 
             // 2. 逐页安全平铺渲染，防止单页异常中断后续所有页面的渲染
@@ -169,8 +169,8 @@ export class PptxView extends FileView {
                 for (let i = 0; i < slideCount; i++) {
                     try {
                         this.previewer.htmlRender.renderSlide(i);
-                    } catch (slideErr) {
-                        console.warn(`渲染第 ${i + 1} 页幻灯片时出现警告:`, slideErr);
+                    } catch {
+                        // 忽略单页局部图元警告
                     }
                 }
             }
@@ -178,9 +178,7 @@ export class PptxView extends FileView {
             // 全屏演示逻辑
             fullscreenBtn.onclick = () => {
                 if (!document.fullscreenElement) {
-                    renderWrapper.requestFullscreen().catch(err => {
-                        console.warn('Fullscreen error:', err);
-                    });
+                    renderWrapper.requestFullscreen().catch(() => {});
                 } else {
                     document.exitFullscreen();
                 }
@@ -208,10 +206,10 @@ export class PptxView extends FileView {
                 }
             };
 
-            let searchTimer: any = null;
+            let searchTimer: number | null = null;
             this.searchInputEl.oninput = () => {
-                if (searchTimer) clearTimeout(searchTimer);
-                searchTimer = setTimeout(() => {
+                if (searchTimer !== null) window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(() => {
                     performPptxSearch(this.searchInputEl?.value || '');
                 }, 200);
             };
@@ -284,18 +282,11 @@ export class PptxView extends FileView {
     private openWithDefaultApp(): void {
         if (!this.currentFile) return;
         try {
-            if ((this.app as any).openWithDefaultApp) {
-                (this.app as any).openWithDefaultApp(this.currentFile.path);
-            } else {
-                const electron = (window as any).require?.('electron');
-                if (electron?.shell) {
-                    const basePath = (this.app.vault.adapter as any).basePath || '';
-                    const fullPath = basePath ? `${basePath}/${this.currentFile.path}` : this.currentFile.path;
-                    electron.shell.openPath(fullPath);
-                }
+            if ('openWithDefaultApp' in this.app) {
+                (this.app as { openWithDefaultApp: (path: string) => void }).openWithDefaultApp(this.currentFile.path);
             }
-        } catch (e) {
-            console.error('Failed to open file with default app:', e);
+        } catch {
+            // ignore
         }
     }
 

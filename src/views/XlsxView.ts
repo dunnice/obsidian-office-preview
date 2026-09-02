@@ -156,7 +156,7 @@ export class XlsxView extends FileView {
                 }
 
                 const lowerQuery = query.trim().toLowerCase();
-                const cells = Array.from(renderWrapper.querySelectorAll('.excel-cell')) as HTMLElement[];
+                const cells = Array.from(renderWrapper.querySelectorAll<HTMLElement>('.excel-cell'));
                 this.searchMatches = cells.filter(cell => cell.textContent?.toLowerCase().includes(lowerQuery));
 
                 this.searchMatches.forEach(cell => cell.addClass('excel-search-highlight'));
@@ -170,10 +170,10 @@ export class XlsxView extends FileView {
                 }
             };
 
-            let searchTimer: any = null;
+            let searchTimer: number | null = null;
             this.searchInputEl.oninput = () => {
-                if (searchTimer) clearTimeout(searchTimer);
-                searchTimer = setTimeout(() => {
+                if (searchTimer !== null) window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(() => {
                     performExcelSearch(this.searchInputEl?.value || '');
                 }, 150);
             };
@@ -294,7 +294,7 @@ export class XlsxView extends FileView {
 
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                const cell = ws[cellRef];
+                const cell = ws[cellRef] as XLSX.CellObject | undefined;
                 
                 let cellText = '';
                 if (cell !== undefined && cell.v !== undefined && cell.v !== null) {
@@ -316,7 +316,7 @@ export class XlsxView extends FileView {
         if (this.isSearchVisible && this.searchInputEl && this.searchInputEl.value) {
             const lowerQuery = this.searchInputEl.value.trim().toLowerCase();
             if (lowerQuery) {
-                const cells = Array.from(renderWrapper.querySelectorAll('.excel-cell')) as HTMLElement[];
+                const cells = Array.from(renderWrapper.querySelectorAll<HTMLElement>('.excel-cell'));
                 this.searchMatches = cells.filter(c => c.textContent?.toLowerCase().includes(lowerQuery));
                 this.searchMatches.forEach(c => c.addClass('excel-search-highlight'));
                 if (this.searchMatches.length > 0) {

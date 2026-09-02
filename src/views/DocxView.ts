@@ -148,10 +148,10 @@ export class DocxView extends FileView {
                 }
             };
 
-            let searchTimer: any = null;
+            let searchTimer: number | null = null;
             this.searchInputEl.oninput = () => {
-                if (searchTimer) clearTimeout(searchTimer);
-                searchTimer = setTimeout(() => {
+                if (searchTimer !== null) window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(() => {
                     performSearch(this.searchInputEl?.value || '');
                 }, 200);
             };

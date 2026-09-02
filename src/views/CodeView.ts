@@ -271,7 +271,7 @@ export class CodeView extends FileView {
             if (toggleOutlineBtn) {
                 toggleOutlineBtn.onclick = () => {
                     this.isOutlineVisible = !this.isOutlineVisible;
-                    toggleOutlineBtn!.toggleClass('is-active', this.isOutlineVisible);
+                    toggleOutlineBtn.toggleClass('is-active', this.isOutlineVisible);
                     outlinePane.toggleClass('is-hidden', !this.isOutlineVisible);
                     renderWrapper.toggleClass('is-full-width', !this.isOutlineVisible);
                 };
@@ -281,7 +281,7 @@ export class CodeView extends FileView {
             if (jsonToggleBtn) {
                 jsonToggleBtn.onclick = () => {
                     this.isJsonFormatted = !this.isJsonFormatted;
-                    jsonToggleBtn!.setText(this.isJsonFormatted ? '✨ 原始紧凑' : '✨ 格式化');
+                    jsonToggleBtn.setText(this.isJsonFormatted ? '✨ 原始紧凑' : '✨ 格式化');
                     codeMount.empty();
                     const codeToDisplay = this.isJsonFormatted ? this.formattedContent : this.rawContent;
                     this.renderSyntaxTree(codeMount, codeToDisplay);
@@ -302,7 +302,7 @@ export class CodeView extends FileView {
                 try {
                     await navigator.clipboard.writeText(codeToCopy);
                     copyBtn.setText('✓ 已复制');
-                    setTimeout(() => copyBtn.setText('📋 复制'), 1800);
+                    window.setTimeout(() => copyBtn.setText('📋 复制'), 1800);
                 } catch (err) {
                     // ignore
                 }
@@ -330,10 +330,10 @@ export class CodeView extends FileView {
                 }
             };
 
-            let searchTimer: any = null;
+            let searchTimer: number | null = null;
             this.searchInputEl.oninput = () => {
-                if (searchTimer) clearTimeout(searchTimer);
-                searchTimer = setTimeout(() => {
+                if (searchTimer !== null) window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(() => {
                     performSearch(this.searchInputEl?.value || '');
                 }, 200);
             };
@@ -506,7 +506,7 @@ export class CodeView extends FileView {
                         node.isCollapsed = !node.isCollapsed;
                         arrowEl.setText(node.isCollapsed ? '▶' : '▼');
                         arrowEl.toggleClass('is-collapsed', node.isCollapsed);
-                        childrenContainer!.toggleClass('is-hidden', node.isCollapsed);
+                        childrenContainer.toggleClass('is-hidden', node.isCollapsed);
                         collapsedBadgeEl.toggleClass('is-hidden', !node.isCollapsed);
                     };
                 }
@@ -517,7 +517,7 @@ export class CodeView extends FileView {
                     if (targetTr) {
                         targetTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         targetTr.addClass('is-focused-line');
-                        setTimeout(() => targetTr.removeClass('is-focused-line'), 1600);
+                        window.setTimeout(() => targetTr.removeClass('is-focused-line'), 1600);
                     }
                 };
             });
@@ -685,17 +685,10 @@ export class CodeView extends FileView {
     private openWithDefaultApp(): void {
         if (!this.currentFile) return;
         try {
-            if ((this.app as any).openWithDefaultApp) {
-                (this.app as any).openWithDefaultApp(this.currentFile.path);
-            } else {
-                const electron = (window as any).require?.('electron');
-                if (electron?.shell) {
-                    const basePath = (this.app.vault.adapter as any).basePath || '';
-                    const fullPath = basePath ? `${basePath}/${this.currentFile.path}` : this.currentFile.path;
-                    electron.shell.openPath(fullPath);
-                }
+            if ('openWithDefaultApp' in this.app) {
+                (this.app as { openWithDefaultApp: (path: string) => void }).openWithDefaultApp(this.currentFile.path);
             }
-        } catch (e) {
+        } catch {
             // ignore
         }
     }
