@@ -3,9 +3,21 @@ import { init } from 'pptx-preview';
 
 export const VIEW_TYPE_PPTX = 'pptx-preview-view';
 
+interface PptxSlideDoc {
+    slides?: unknown[];
+}
+
+interface PptxPreviewerInstance {
+    load(data: ArrayBuffer): Promise<PptxSlideDoc | null>;
+    htmlRender?: {
+        renderSlide(index: number): void;
+    };
+    destroy?(): void;
+}
+
 export class PptxView extends FileView {
     private currentFile: TFile | null = null;
-    private previewer: any = null;
+    private previewer: PptxPreviewerInstance | null = null;
 
     // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
@@ -49,8 +61,8 @@ export class PptxView extends FileView {
         if (this.previewer && typeof this.previewer.destroy === 'function') {
             try {
                 this.previewer.destroy();
-            } catch (e) {
-                console.warn('Error destroying pptx previewer:', e);
+            } catch {
+                // ignore
             }
         }
         this.previewer = null;
@@ -86,23 +98,23 @@ export class PptxView extends FileView {
         container.addClass('office-preview-pptx-container');
 
         // 1. 顶部主工具栏
-        const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
+        const toolbar = container.createDiv({ cls: 'office-preview-toolbar' });
 
-        const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
-        const titleEl = titleContainer.createEl('span', {
+        const titleContainer = toolbar.createDiv({ cls: 'office-preview-title-container' });
+        const titleEl = titleContainer.createSpan({
             cls: 'office-preview-title',
             text: `📽️ ${this.currentFile.name}`
         });
 
         if (this.currentFile.stat && this.currentFile.stat.mtime) {
             const timeStr = this.formatDate(this.currentFile.stat.mtime);
-            titleContainer.createEl('span', {
+            titleContainer.createSpan({
                 cls: 'office-preview-mtime',
                 text: `修改时间: ${timeStr}`
             });
         }
 
-        const controls = toolbar.createEl('div', { cls: 'office-preview-controls' });
+        const controls = toolbar.createDiv({ cls: 'office-preview-controls' });
 
         // 全屏演示按钮
         const fullscreenBtn = controls.createEl('button', { cls: 'office-preview-btn', text: '🖥️ 全屏' });
@@ -119,7 +131,7 @@ export class PptxView extends FileView {
         reloadBtn.onclick = () => this.renderPptx();
 
         // 2. 悬浮搜索控制面板
-        this.searchContainerEl = container.createEl('div', { cls: 'office-preview-search-bar is-hidden' });
+        this.searchContainerEl = container.createDiv({ cls: 'office-preview-search-bar is-hidden' });
 
         this.searchInputEl = this.searchContainerEl.createEl('input', {
             cls: 'office-preview-search-input',
@@ -127,40 +139,43 @@ export class PptxView extends FileView {
             placeholder: '搜索幻灯片内容 (Cmd+F)...'
         });
 
-        this.searchCountEl = this.searchContainerEl.createEl('span', { cls: 'office-preview-search-count', text: '0 / 0' });
+        this.searchCountEl = this.searchContainerEl.createSpan({ cls: 'office-preview-search-count', text: '0 / 0' });
 
         const prevMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔼' });
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
         // 3. 类似 Word 的自然平铺长卷视口包裹容器
-        const renderWrapper = container.createEl('div', { cls: 'office-preview-pptx-wrapper' });
-        const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在解析并流式平铺 PowerPoint 幻灯片...' });
+        const renderWrapper = container.createDiv({ cls: 'office-preview-pptx-wrapper' });
+        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: '正在解析并流式平铺 PowerPoint 幻灯片...' });
 
         try {
             const arrayBuffer = await this.app.vault.readBinary(this.currentFile);
-            loadingEl.remove();
 
+            // 检查是否为旧版二进制 .ppt 文件
             if (this.isLegacyPpt(arrayBuffer)) {
+                loadingEl.remove();
                 this.renderLegacyPptNotice(renderWrapper);
                 return;
             }
 
-            // 内容挂载容器
-            const pptxRenderEl = renderWrapper.createEl('div', { cls: 'pptx-render-mount' });
+            loadingEl.remove();
 
-            // 动态计算适合视口宽度的单页渲染基准宽（保证在侧边栏或主工作区都能完美适配）
-            const wrapperWidth = renderWrapper.clientWidth > 100 ? renderWrapper.clientWidth - 48 : 960;
-            const renderWidth = Math.min(Math.max(wrapperWidth, 600), 960);
+            // 测量视口实际宽度，动态计算幻灯片渲染宽度 (铺满视口且两边留 32px 边距)
+            const availableWidth = renderWrapper.clientWidth || 960;
+            const renderWidth = Math.max(640, Math.min(availableWidth - 64, 1400));
+
+            const pptxRenderEl = renderWrapper.createDiv({ cls: 'pptx-flow-container' });
 
             // 初始化预览器
-            this.previewer = init(pptxRenderEl, {
+            const previewerInstance = init(pptxRenderEl, {
                 width: renderWidth,
                 mode: 'list'
-            });
+            }) as PptxPreviewerInstance;
+            this.previewer = previewerInstance;
 
             // 1. 先通过 load 解析 PPTX 数据对象
-            const pptxDoc = (await this.previewer.load(arrayBuffer)) as { slides?: unknown[] } | null;
+            const pptxDoc = await this.previewer.load(arrayBuffer);
             const slideCount = pptxDoc?.slides?.length ?? 0;
             titleEl.setText(`📽️ ${this.currentFile.name} (共 ${slideCount} 页)`);
 
@@ -195,7 +210,7 @@ export class PptxView extends FileView {
                 }
 
                 this.highlightText(pptxRenderEl, query.trim().toLowerCase());
-                this.searchMatches = Array.from(pptxRenderEl.querySelectorAll('.pptx-search-highlight'));
+                this.searchMatches = Array.from(pptxRenderEl.querySelectorAll<HTMLElement>('.office-preview-search-highlight'));
 
                 if (this.searchMatches.length > 0) {
                     this.currentMatchIndex = 0;
@@ -238,12 +253,11 @@ export class PptxView extends FileView {
             };
 
         } catch (error) {
-            console.error('Error rendering PPTX:', error);
             loadingEl.remove();
             if (this.currentFile.extension.toLowerCase() === 'ppt') {
                 this.renderLegacyPptNotice(renderWrapper);
             } else {
-                renderWrapper.createEl('div', {
+                renderWrapper.createDiv({
                     cls: 'office-preview-error',
                     text: `解析 PowerPoint 演示文稿失败: ${error instanceof Error ? error.message : String(error)}`
                 });
@@ -256,16 +270,16 @@ export class PptxView extends FileView {
      */
     private renderLegacyPptNotice(wrapper: HTMLElement): void {
         wrapper.empty();
-        const card = wrapper.createEl('div', { cls: 'office-preview-legacy-card' });
+        const card = wrapper.createDiv({ cls: 'office-preview-legacy-card' });
 
-        card.createEl('div', { cls: 'office-preview-legacy-icon', text: '📽️' });
+        card.createDiv({ cls: 'office-preview-legacy-icon', text: '📽️' });
         card.createEl('h3', { cls: 'office-preview-legacy-title', text: 'PowerPoint 97-2003 演示文稿 (.ppt)' });
         card.createEl('p', {
             cls: 'office-preview-legacy-desc',
             text: '当前文件为早期 Office 二进制复合格式 (.ppt)。由于该格式属于专有二进制结构，建议使用系统默认应用（Microsoft PowerPoint / WPS / Keynote）打开，或将其另存为现代 .pptx 格式以获得完整的内嵌原生预览支持。'
         });
 
-        const btnGroup = card.createEl('div', { cls: 'office-preview-legacy-actions' });
+        const btnGroup = card.createDiv({ cls: 'office-preview-legacy-actions' });
         const openBtn = btnGroup.createEl('button', {
             cls: 'office-preview-btn is-primary',
             text: '🚀 使用系统默认应用打开'
@@ -274,7 +288,7 @@ export class PptxView extends FileView {
 
         const reloadBtn = btnGroup.createEl('button', {
             cls: 'office-preview-btn',
-            text: '🔄 重新检测'
+            text: '刷新'
         });
         reloadBtn.onclick = () => this.renderPptx();
     }
@@ -331,7 +345,7 @@ export class PptxView extends FileView {
     }
 
     private clearSearchHighlights(root: HTMLElement): void {
-        const highlights = root.querySelectorAll('.pptx-search-highlight');
+        const highlights = root.querySelectorAll('.office-preview-search-highlight');
         highlights.forEach((mark) => {
             const parent = mark.parentNode;
             if (parent) {
@@ -351,7 +365,7 @@ export class PptxView extends FileView {
             const text = textNode.nodeValue || '';
             const lowerText = text.toLowerCase();
 
-            if (lowerText.includes(query) && textNode.parentElement && !textNode.parentElement.hasClass('pptx-search-highlight')) {
+            if (lowerText.includes(query) && textNode.parentElement && !textNode.parentElement.hasClass('office-preview-search-highlight')) {
                 const matches: { index: number; length: number }[] = [];
                 let startIndex = 0;
                 let foundIndex = lowerText.indexOf(query, startIndex);
@@ -367,7 +381,7 @@ export class PptxView extends FileView {
 
         nodesToReplace.forEach(({ node, matches }) => {
             const text = node.nodeValue || '';
-            const fragment = document.createDocumentFragment();
+            const fragment = createFragment();
             let lastIndex = 0;
 
             matches.forEach(({ index, length }) => {

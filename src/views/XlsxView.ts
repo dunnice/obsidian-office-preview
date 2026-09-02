@@ -7,6 +7,8 @@ export class XlsxView extends FileView {
     private currentFile: TFile | null = null;
     private workbook: XLSX.WorkBook | null = null;
     private currentSheetIndex: number = 0;
+
+    // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
     private currentMatchIndex: number = -1;
     private isSearchVisible: boolean = false;
@@ -64,23 +66,23 @@ export class XlsxView extends FileView {
         container.addClass('office-preview-xlsx-container');
 
         // 1. 顶部主工具栏
-        const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
+        const toolbar = container.createDiv({ cls: 'office-preview-toolbar' });
         
-        const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
-        titleContainer.createEl('span', { 
+        const titleContainer = toolbar.createDiv({ cls: 'office-preview-title-container' });
+        titleContainer.createSpan({ 
             cls: 'office-preview-title', 
             text: `📊 ${this.currentFile.name}` 
         });
 
         if (this.currentFile.stat && this.currentFile.stat.mtime) {
             const timeStr = this.formatDate(this.currentFile.stat.mtime);
-            titleContainer.createEl('span', {
+            titleContainer.createSpan({
                 cls: 'office-preview-mtime',
                 text: `修改时间: ${timeStr}`
             });
         }
 
-        const controls = toolbar.createEl('div', { cls: 'office-preview-controls' });
+        const controls = toolbar.createDiv({ cls: 'office-preview-controls' });
 
         // 搜索触发按钮
         const toggleSearchBtn = controls.createEl('button', { cls: 'office-preview-btn', text: '🔍 查找' });
@@ -89,7 +91,7 @@ export class XlsxView extends FileView {
         reloadBtn.onclick = () => this.renderXlsx();
 
         // 2. 悬浮搜索控制面板
-        this.searchContainerEl = container.createEl('div', { cls: 'office-preview-search-bar is-hidden' });
+        this.searchContainerEl = container.createDiv({ cls: 'office-preview-search-bar is-hidden' });
         
         this.searchInputEl = this.searchContainerEl.createEl('input', {
             cls: 'office-preview-search-input',
@@ -97,18 +99,18 @@ export class XlsxView extends FileView {
             placeholder: '搜索单元格内容 (Cmd+F)...'
         });
 
-        this.searchCountEl = this.searchContainerEl.createEl('span', { cls: 'office-preview-search-count', text: '0 / 0' });
+        this.searchCountEl = this.searchContainerEl.createSpan({ cls: 'office-preview-search-count', text: '0 / 0' });
 
         const prevMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔼' });
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
         // 3. 多 Sheet 标签页切换栏
-        const tabsBar = container.createEl('div', { cls: 'office-preview-sheet-tabs-bar' });
+        const tabsBar = container.createDiv({ cls: 'office-preview-sheet-tabs-bar' });
 
         // 4. 表格内容包裹容器
-        const renderWrapper = container.createEl('div', { cls: 'office-preview-xlsx-wrapper' });
-        const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在解析 Excel 工作簿...' });
+        const renderWrapper = container.createDiv({ cls: 'office-preview-xlsx-wrapper' });
+        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: '正在解析 Excel 工作簿...' });
 
         try {
             const arrayBuffer = await this.app.vault.readBinary(this.currentFile);
@@ -117,7 +119,7 @@ export class XlsxView extends FileView {
             this.workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true, cellStyles: true });
 
             if (!this.workbook.SheetNames || this.workbook.SheetNames.length === 0) {
-                renderWrapper.createEl('div', { cls: 'office-preview-error', text: 'Excel 文件未包含任何工作表 (Sheet)' });
+                renderWrapper.createDiv({ cls: 'office-preview-error', text: 'Excel 文件未包含任何工作表 (Sheet)' });
                 return;
             }
 
@@ -142,10 +144,10 @@ export class XlsxView extends FileView {
                 };
             });
 
-            // 首次展示第 0 个 Sheet
+            // 初始加载当前激活的 Sheet
             this.loadCurrentSheetHtml(renderWrapper);
 
-            // 绑定搜索逻辑
+            // 搜索逻辑注册
             const performExcelSearch = (query: string) => {
                 this.clearTableHighlights(renderWrapper);
                 if (!query || query.trim() === '') {
@@ -192,7 +194,8 @@ export class XlsxView extends FileView {
             closeSearchBtn.onclick = () => this.toggleSearch(false, renderWrapper);
             toggleSearchBtn.onclick = () => this.toggleSearch(!this.isSearchVisible, renderWrapper);
 
-            // 快捷键 Cmd+F / Ctrl+F 触发
+            // 快捷键监听
+            container.tabIndex = 0;
             container.onkeydown = (e: KeyboardEvent) => {
                 if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
                     e.preventDefault();
@@ -202,7 +205,7 @@ export class XlsxView extends FileView {
 
         } catch (error) {
             loadingEl.remove();
-            renderWrapper.createEl('div', { 
+            renderWrapper.createDiv({ 
                 cls: 'office-preview-error', 
                 text: `解析 Excel 表格失败: ${error instanceof Error ? error.message : String(error)}` 
             });
@@ -266,13 +269,13 @@ export class XlsxView extends FileView {
         renderWrapper.empty();
 
         if (!ws) {
-            renderWrapper.createEl('div', { cls: 'office-preview-error', text: '该工作表无有效数据' });
+            renderWrapper.createDiv({ cls: 'office-preview-error', text: '该工作表无有效数据' });
             return;
         }
 
         const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
 
-        const tableContainer = renderWrapper.createEl('div', { cls: 'excel-table-container' });
+        const tableContainer = renderWrapper.createDiv({ cls: 'excel-table-container' });
         const table = tableContainer.createEl('table', { cls: 'excel-table' });
 
         const thead = table.createEl('thead');

@@ -238,9 +238,9 @@ export class CodeView extends FileView {
             // 如果是 JSON，尝试解析并格式化
             if (this.language === 'json') {
                 try {
-                    const parsed = JSON.parse(this.rawContent);
+                    const parsed: unknown = JSON.parse(this.rawContent);
                     this.formattedContent = JSON.stringify(parsed, null, 2);
-                } catch (e) {
+                } catch {
                     this.formattedContent = this.rawContent;
                 }
             }
@@ -621,7 +621,7 @@ export class CodeView extends FileView {
             const trimmed = line.trim();
             if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('---')) return;
 
-            const match = line.match(/^(\s*)(?:-\s+)?([a-zA-Z0-9_\-\.\/]+)\s*:\s*(.*)$/);
+            const match = line.match(/^(\s*)(?:-\s+)?([a-zA-Z0-9_./-]+)\s*:\s*(.*)$/);
             if (match) {
                 const indent = match[1].length;
                 const key = match[2];
@@ -776,7 +776,7 @@ export class CodeView extends FileView {
 
         nodesToReplace.forEach(({ node, matches }) => {
             const text = node.nodeValue || '';
-            const fragment = document.createDocumentFragment();
+            const fragment = createFragment();
             let lastIndex = 0;
 
             matches.forEach(({ index, length }) => {

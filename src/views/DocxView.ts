@@ -5,6 +5,8 @@ export const VIEW_TYPE_DOCX = 'docx-preview-view';
 
 export class DocxView extends FileView {
     private currentFile: TFile | null = null;
+
+    // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
     private currentMatchIndex: number = -1;
     private isSearchVisible: boolean = false;
@@ -25,7 +27,7 @@ export class DocxView extends FileView {
     }
 
     getIcon(): string {
-        return 'file-text';
+        return 'document';
     }
 
     async onLoadFile(file: TFile): Promise<void> {
@@ -60,10 +62,10 @@ export class DocxView extends FileView {
         container.addClass('office-preview-docx-container');
 
         // 1. 顶部主工具栏
-        const toolbar = container.createEl('div', { cls: 'office-preview-toolbar' });
+        const toolbar = container.createDiv({ cls: 'office-preview-toolbar' });
         
-        const titleContainer = toolbar.createEl('div', { cls: 'office-preview-title-container' });
-        titleContainer.createEl('span', { 
+        const titleContainer = toolbar.createDiv({ cls: 'office-preview-title-container' });
+        titleContainer.createSpan({ 
             cls: 'office-preview-title', 
             text: `📄 ${this.currentFile.name}` 
         });
@@ -71,13 +73,13 @@ export class DocxView extends FileView {
         // 浅色小字修改时间
         if (this.currentFile.stat && this.currentFile.stat.mtime) {
             const timeStr = this.formatDate(this.currentFile.stat.mtime);
-            titleContainer.createEl('span', {
+            titleContainer.createSpan({
                 cls: 'office-preview-mtime',
                 text: `修改时间: ${timeStr}`
             });
         }
 
-        const controls = toolbar.createEl('div', { cls: 'office-preview-controls' });
+        const controls = toolbar.createDiv({ cls: 'office-preview-controls' });
 
         // 搜索触发按钮
         const toggleSearchBtn = controls.createEl('button', { cls: 'office-preview-btn', text: '🔍 查找' });
@@ -86,7 +88,7 @@ export class DocxView extends FileView {
         reloadBtn.onclick = () => this.renderDocx();
 
         // 2. 悬浮搜索控制面板
-        this.searchContainerEl = container.createEl('div', { cls: 'office-preview-search-bar is-hidden' });
+        this.searchContainerEl = container.createDiv({ cls: 'office-preview-search-bar is-hidden' });
         
         this.searchInputEl = this.searchContainerEl.createEl('input', {
             cls: 'office-preview-search-input',
@@ -94,21 +96,21 @@ export class DocxView extends FileView {
             placeholder: '输入关键词搜索 (Cmd+F)...'
         });
 
-        this.searchCountEl = this.searchContainerEl.createEl('span', { cls: 'office-preview-search-count', text: '0 / 0' });
+        this.searchCountEl = this.searchContainerEl.createSpan({ cls: 'office-preview-search-count', text: '0 / 0' });
 
         const prevMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔼' });
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
         // 3. 自然连续的 Word 阅读视图包裹容器
-        const renderWrapper = container.createEl('div', { cls: 'office-preview-docx-wrapper' });
-        const loadingEl = renderWrapper.createEl('div', { cls: 'office-preview-loading', text: '正在渲染 Word 文档...' });
+        const renderWrapper = container.createDiv({ cls: 'office-preview-docx-wrapper' });
+        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: '正在渲染 Word 文档...' });
 
         try {
             const arrayBuffer = await this.app.vault.readBinary(this.currentFile);
             loadingEl.remove();
 
-            const docxContainer = renderWrapper.createEl('div', { cls: 'docx-render-body' });
+            const docxContainer = renderWrapper.createDiv({ cls: 'docx-render-body' });
 
             await renderAsync(arrayBuffer, docxContainer, undefined, {
                 className: 'docx',
@@ -123,6 +125,7 @@ export class DocxView extends FileView {
                 renderFooters: true,
                 renderFootnotes: true,
                 renderEndnotes: true,
+                debug: false
             });
 
             // 搜索逻辑注册
@@ -135,10 +138,9 @@ export class DocxView extends FileView {
                     return;
                 }
 
-                // 遍历搜寻文本节点
                 this.highlightText(docxContainer, query.trim().toLowerCase());
-                this.searchMatches = Array.from(docxContainer.querySelectorAll('.docx-search-highlight'));
-                
+                this.searchMatches = Array.from(docxContainer.querySelectorAll<HTMLElement>('.office-preview-search-highlight'));
+
                 if (this.searchMatches.length > 0) {
                     this.currentMatchIndex = 0;
                     this.focusMatch(0);
@@ -170,7 +172,8 @@ export class DocxView extends FileView {
             closeSearchBtn.onclick = () => this.toggleSearch(false, docxContainer);
             toggleSearchBtn.onclick = () => this.toggleSearch(!this.isSearchVisible, docxContainer);
 
-            // 快捷键 Cmd+F / Ctrl+F 触发
+            // 快捷键监听
+            container.tabIndex = 0;
             container.onkeydown = (e: KeyboardEvent) => {
                 if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
                     e.preventDefault();
@@ -180,7 +183,7 @@ export class DocxView extends FileView {
 
         } catch (error) {
             loadingEl.remove();
-            renderWrapper.createEl('div', { 
+            renderWrapper.createDiv({ 
                 cls: 'office-preview-error', 
                 text: `解析 Word 文档失败: ${error instanceof Error ? error.message : String(error)}` 
             });
@@ -228,7 +231,7 @@ export class DocxView extends FileView {
     }
 
     private clearSearchHighlights(root: HTMLElement): void {
-        const highlights = root.querySelectorAll('.docx-search-highlight');
+        const highlights = root.querySelectorAll('.office-preview-search-highlight');
         highlights.forEach((mark) => {
             const parent = mark.parentNode;
             if (parent) {
@@ -248,7 +251,7 @@ export class DocxView extends FileView {
             const text = textNode.nodeValue || '';
             const lowerText = text.toLowerCase();
             
-            if (lowerText.includes(query) && textNode.parentElement && !textNode.parentElement.hasClass('docx-search-highlight')) {
+            if (lowerText.includes(query) && textNode.parentElement && !textNode.parentElement.hasClass('office-preview-search-highlight')) {
                 const matches: { index: number; length: number }[] = [];
                 let startIndex = 0;
                 let foundIndex = lowerText.indexOf(query, startIndex);
@@ -264,7 +267,7 @@ export class DocxView extends FileView {
 
         nodesToReplace.forEach(({ node, matches }) => {
             const text = node.nodeValue || '';
-            const fragment = document.createDocumentFragment();
+            const fragment = createFragment();
             let lastIndex = 0;
 
             matches.forEach(({ index, length }) => {
