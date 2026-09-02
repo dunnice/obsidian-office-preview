@@ -1,6 +1,6 @@
 {
   "name": "obsidian-office-preview",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Native Word, Excel, PowerPoint, JSON, SQL, and YAML preview plugin for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -17,7 +17,7 @@
     "powerpoint",
     "office-preview"
   ],
-  "author": "Antigravity",
+  "author": "dunnice",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",
