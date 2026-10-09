@@ -802,6 +802,8 @@ mark.pptx-search-highlight.is-active {
     font-size: inherit;
     line-height: inherit;
     white-space: pre;
+    tab-size: 2;
+    -moz-tab-size: 2;
     overflow: visible;
 }
 
@@ -812,6 +814,8 @@ mark.pptx-search-highlight.is-active {
     padding: 0;
     background: transparent;
     color: inherit;
+    tab-size: 2;
+    -moz-tab-size: 2;
 }
 
 /* =========================================================

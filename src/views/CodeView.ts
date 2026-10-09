@@ -400,13 +400,18 @@ export class CodeView extends FileView {
             const pre = codeTd.createEl('pre', { cls: `language-${this.language}` });
             const code = pre.createEl('code', { cls: `language-${this.language}` });
             
-            // 安全节点渲染，完全避免直接 innerHTML 赋值
+            // 安全节点渲染，完全避免直接 innerHTML 赋值，并在 pre/code 上下文中完整保留行首空格缩进
             if (!lineHtml) {
                 code.setText('\u00A0');
             } else {
-                const parsedDoc = domParser.parseFromString(lineHtml, 'text/html');
-                while (parsedDoc.body.firstChild) {
-                    code.appendChild(parsedDoc.body.firstChild);
+                const parsedDoc = domParser.parseFromString(`<pre><code>${lineHtml}</code></pre>`, 'text/html');
+                const parsedCode = parsedDoc.body.querySelector('code');
+                if (parsedCode && parsedCode.hasChildNodes()) {
+                    while (parsedCode.firstChild) {
+                        code.appendChild(parsedCode.firstChild);
+                    }
+                } else {
+                    code.setText('\u00A0');
                 }
             }
         });
