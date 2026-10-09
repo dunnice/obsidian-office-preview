@@ -375,9 +375,8 @@ export class CodeView extends FileView {
      */
     private renderSyntaxTree(mount: HTMLElement, codeText: string): void {
         const grammar = Prism.languages[this.language] || Prism.languages.plaintext;
-        const highlightedHtml = Prism.highlight(codeText, grammar, this.language);
-
-        const lines = highlightedHtml.split('\n');
+        const normalizedHtml = highlightedHtml.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const lines = normalizedHtml.split('\n');
 
         const codeContainer = mount.createDiv({ cls: 'code-viewer-container' });
         const table = codeContainer.createEl('table', { cls: 'code-table' });
@@ -400,17 +399,26 @@ export class CodeView extends FileView {
             const pre = codeTd.createEl('pre', { cls: `language-${this.language}` });
             const code = pre.createEl('code', { cls: `language-${this.language}` });
             
-            // 安全节点渲染，完全避免直接 innerHTML 赋值，并在 pre/code 上下文中完整保留行首空格缩进
             if (!lineHtml) {
                 code.setText('\u00A0');
             } else {
-                const parsedDoc = domParser.parseFromString(`<pre><code>${lineHtml}</code></pre>`, 'text/html');
-                const parsedCode = parsedDoc.body.querySelector('code');
-                if (parsedCode && parsedCode.hasChildNodes()) {
-                    while (parsedCode.firstChild) {
-                        code.appendChild(parsedCode.firstChild);
+                // 1. 显式提取行首所有前导缩进空白（空格与制表符），用纯文本节点稳固承载，绝不被任何 HTML 解析器过滤
+                const indentMatch = lineHtml.match(/^([ \t]+)/);
+                const indent = indentMatch ? indentMatch[1] : '';
+                const restHtml = lineHtml.slice(indent.length);
+
+                if (indent) {
+                    const indentSpan = code.createSpan({ cls: 'code-indent-spaces' });
+                    indentSpan.setText(indent);
+                }
+
+                // 2. 将剩余高亮内容安全解析为子节点
+                if (restHtml) {
+                    const parsedDoc = domParser.parseFromString(restHtml, 'text/html');
+                    while (parsedDoc.body.firstChild) {
+                        code.appendChild(parsedDoc.body.firstChild);
                     }
-                } else {
+                } else if (!indent) {
                     code.setText('\u00A0');
                 }
             }
