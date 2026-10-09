@@ -375,6 +375,7 @@ export class CodeView extends FileView {
      */
     private renderSyntaxTree(mount: HTMLElement, codeText: string): void {
         const grammar = Prism.languages[this.language] || Prism.languages.plaintext;
+        const highlightedHtml = Prism.highlight(codeText, grammar, this.language);
         const normalizedHtml = highlightedHtml.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const lines = normalizedHtml.split('\n');
 
