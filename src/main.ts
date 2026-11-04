@@ -48,10 +48,13 @@ export default class OfficePreviewPlugin extends Plugin {
             (leaf) => new CodeView(leaf)
         );
 
-        try {
-            this.registerExtensions(['json', 'sql', 'yaml', 'yml', 'txt'], VIEW_TYPE_CODE);
-        } catch (e) {
-            console.warn('Code extensions (json, sql, yaml, yml, txt) already registered or conflict:', e);
+        const codeExtensions = ['json', 'sql', 'yaml', 'yml', 'txt'];
+        for (const ext of codeExtensions) {
+            try {
+                this.registerExtensions([ext], VIEW_TYPE_CODE);
+            } catch (e) {
+                console.warn(`Code extension (.${ext}) registration warning:`, e);
+            }
         }
     }
 
