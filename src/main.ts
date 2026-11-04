@@ -42,16 +42,16 @@ export default class OfficePreviewPlugin extends Plugin {
             console.warn('Pptx/Ppt extension already registered or conflict:', e);
         }
 
-        // 注册结构化代码与配置文件视图 (json, sql, yaml, yml)
+        // 注册结构化代码与文本文件视图 (json, sql, yaml, yml, txt)
         this.registerView(
             VIEW_TYPE_CODE,
             (leaf) => new CodeView(leaf)
         );
 
         try {
-            this.registerExtensions(['json', 'sql', 'yaml', 'yml'], VIEW_TYPE_CODE);
+            this.registerExtensions(['json', 'sql', 'yaml', 'yml', 'txt'], VIEW_TYPE_CODE);
         } catch (e) {
-            console.warn('Code extensions (json, sql, yaml, yml) already registered or conflict:', e);
+            console.warn('Code extensions (json, sql, yaml, yml, txt) already registered or conflict:', e);
         }
     }
 

@@ -28,6 +28,18 @@ export class CodeView extends FileView {
     private isOutlineVisible: boolean = true;
     private outlineTree: OutlineTreeNode[] = [];
 
+    // 编辑模式状态管理
+    private isEditMode: boolean = false;
+    private hasUnsavedChanges: boolean = false;
+    private editorTextareaEl: HTMLTextAreaElement | null = null;
+    private editorLineNumbersEl: HTMLElement | null = null;
+    private editStatusBadgeEl: HTMLElement | null = null;
+    private cursorInfoEl: HTMLElement | null = null;
+    private modeToggleBtn: HTMLButtonElement | null = null;
+    private saveBtn: HTMLButtonElement | null = null;
+    private mtimeEl: HTMLElement | null = null;
+    private fileSizeEl: HTMLElement | null = null;
+
     // 搜索状态管理
     private searchMatches: HTMLElement[] = [];
     private currentMatchIndex: number = -1;
@@ -58,6 +70,8 @@ export class CodeView extends FileView {
             case 'yaml':
             case 'yml':
                 return 'file-text';
+            case 'txt':
+                return 'document';
             default:
                 return 'code';
         }
@@ -68,16 +82,36 @@ export class CodeView extends FileView {
         this.searchMatches = [];
         this.currentMatchIndex = -1;
         this.isSearchVisible = false;
+        this.isEditMode = false;
+        this.hasUnsavedChanges = false;
         this.determineLanguage(file.extension);
         await this.renderCode();
     }
 
     async onUnloadFile(file: TFile): Promise<void> {
+        // 如果离开时有未保存的编辑内容，自动静默保存
+        if (this.hasUnsavedChanges && this.editorTextareaEl && this.currentFile) {
+            try {
+                await this.app.vault.modify(this.currentFile, this.editorTextareaEl.value);
+            } catch {
+                // ignore
+            }
+        }
         this.currentFile = null;
         this.rawContent = '';
         this.formattedContent = '';
         this.searchMatches = [];
         this.outlineTree = [];
+        this.isEditMode = false;
+        this.hasUnsavedChanges = false;
+        this.editorTextareaEl = null;
+        this.editorLineNumbersEl = null;
+        this.editStatusBadgeEl = null;
+        this.cursorInfoEl = null;
+        this.modeToggleBtn = null;
+        this.saveBtn = null;
+        this.mtimeEl = null;
+        this.fileSizeEl = null;
         this.contentEl.empty();
     }
 
@@ -94,6 +128,9 @@ export class CodeView extends FileView {
             case 'yml':
                 this.language = 'yaml';
                 break;
+            case 'txt':
+                this.language = 'plaintext';
+                break;
             default:
                 this.language = 'plaintext';
                 break;
@@ -101,6 +138,8 @@ export class CodeView extends FileView {
     }
 
     private getFileIconEmoji(): string {
+        const ext = this.currentFile?.extension?.toLowerCase();
+        if (ext === 'txt') return '📄';
         switch (this.language) {
             case 'json':
                 return '{ }';
@@ -129,6 +168,56 @@ export class CodeView extends FileView {
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
+    private refreshFileMeta(): void {
+        if (!this.currentFile?.stat) return;
+        if (this.mtimeEl && this.currentFile.stat.mtime) {
+            this.mtimeEl.setText(`修改时间: ${this.formatDate(this.currentFile.stat.mtime)}`);
+        }
+        if (this.fileSizeEl && this.currentFile.stat.size) {
+            this.fileSizeEl.setText(`(${this.formatFileSize(this.currentFile.stat.size)})`);
+        }
+    }
+
+    private updateEditStatus(): void {
+        if (!this.editStatusBadgeEl) return;
+        if (this.hasUnsavedChanges) {
+            this.editStatusBadgeEl.setText('● 未保存修改');
+            this.editStatusBadgeEl.addClass('is-dirty');
+            this.editStatusBadgeEl.removeClass('is-saved');
+        } else {
+            this.editStatusBadgeEl.setText('✓ 已保存');
+            this.editStatusBadgeEl.addClass('is-saved');
+            this.editStatusBadgeEl.removeClass('is-dirty');
+        }
+    }
+
+    private async saveContent(): Promise<void> {
+        if (!this.currentFile || !this.editorTextareaEl) return;
+        const newContent = this.editorTextareaEl.value;
+        try {
+            await this.app.vault.modify(this.currentFile, newContent);
+            this.rawContent = newContent;
+            this.hasUnsavedChanges = false;
+            this.updateEditStatus();
+
+            if (this.saveBtn) {
+                this.saveBtn.setText('✓ 已保存');
+                window.setTimeout(() => {
+                    if (this.saveBtn) this.saveBtn.setText('💾 保存');
+                }, 1500);
+            }
+            this.refreshFileMeta();
+        } catch (err) {
+            console.error('Failed to save file:', err);
+            if (this.saveBtn) {
+                this.saveBtn.setText('❌ 保存失败');
+                window.setTimeout(() => {
+                    if (this.saveBtn) this.saveBtn.setText('💾 保存');
+                }, 2000);
+            }
+        }
+    }
+
     private async renderCode(): Promise<void> {
         if (!this.currentFile) return;
 
@@ -145,24 +234,48 @@ export class CodeView extends FileView {
             text: `${this.getFileIconEmoji()} ${this.currentFile.name}`
         });
 
+        // 编辑状态徽章 (未保存 / 已保存)
+        this.editStatusBadgeEl = titleContainer.createSpan({
+            cls: `office-preview-status-badge ${this.isEditMode ? '' : 'is-hidden'}`,
+            text: '✓ 已保存'
+        });
+
+        // 光标与行列统计信息 (编辑模式展示)
+        this.cursorInfoEl = titleContainer.createSpan({
+            cls: `office-preview-cursor-info ${this.isEditMode ? '' : 'is-hidden'}`,
+            text: ''
+        });
+
         if (this.currentFile.stat) {
             if (this.currentFile.stat.mtime) {
-                const timeStr = this.formatDate(this.currentFile.stat.mtime);
-                titleContainer.createSpan({
+                this.mtimeEl = titleContainer.createSpan({
                     cls: 'office-preview-mtime',
-                    text: `修改时间: ${timeStr}`
+                    text: `修改时间: ${this.formatDate(this.currentFile.stat.mtime)}`
                 });
             }
             if (this.currentFile.stat.size) {
-                const sizeStr = this.formatFileSize(this.currentFile.stat.size);
-                titleContainer.createSpan({
+                this.fileSizeEl = titleContainer.createSpan({
                     cls: 'office-preview-mtime',
-                    text: `(${sizeStr})`
+                    text: `(${this.formatFileSize(this.currentFile.stat.size)})`
                 });
             }
         }
 
         const controls = toolbar.createDiv({ cls: 'office-preview-controls' });
+
+        // 模式切换按钮 (✏️ 编辑 / 👁️ 预览)
+        this.modeToggleBtn = controls.createEl('button', {
+            cls: `office-preview-btn ${this.isEditMode ? 'is-active' : ''}`,
+            text: this.isEditMode ? '👁️ 预览' : '✏️ 编辑'
+        });
+
+        // 快速保存按钮 (💾 保存)
+        this.saveBtn = controls.createEl('button', {
+            cls: `office-preview-btn office-preview-save-btn ${this.isEditMode ? '' : 'is-hidden'}`,
+            text: '💾 保存',
+            title: '保存修改 (Cmd+S / Ctrl+S)'
+        });
+        this.saveBtn.onclick = async () => await this.saveContent();
 
         // JSON 专属：格式化 / 紧凑切换按钮
         let jsonToggleBtn: HTMLButtonElement | null = null;
@@ -179,12 +292,12 @@ export class CodeView extends FileView {
             text: this.isWordWrap ? '↩️ 换行开启' : '↩️ 换行关闭'
         });
 
-        // 大纲面板切换按钮 (仅对 json, yaml 生效)
+        // 大纲面板切换按钮 (对 json, yaml, sql 生效)
         let toggleOutlineBtn: HTMLButtonElement | null = null;
-        const supportsOutline = this.language === 'json' || this.language === 'yaml';
+        const supportsOutline = this.language === 'json' || this.language === 'yaml' || this.language === 'sql';
         if (supportsOutline) {
             toggleOutlineBtn = controls.createEl('button', {
-                cls: `office-preview-btn ${this.isOutlineVisible ? 'is-active' : ''}`,
+                cls: `office-preview-btn ${this.isOutlineVisible ? 'is-active' : ''} ${this.isEditMode ? 'is-hidden' : ''}`,
                 text: '🗂️ 大纲'
             });
         }
@@ -201,7 +314,12 @@ export class CodeView extends FileView {
 
         // 刷新按钮
         const reloadBtn = controls.createEl('button', { cls: 'office-preview-btn', text: '刷新' });
-        reloadBtn.onclick = () => this.renderCode();
+        reloadBtn.onclick = async () => {
+            if (this.hasUnsavedChanges) {
+                await this.saveContent();
+            }
+            await this.renderCode();
+        };
 
         // 2. 悬浮搜索控制面板
         this.searchContainerEl = container.createDiv({ cls: 'office-preview-search-bar is-hidden' });
@@ -218,18 +336,25 @@ export class CodeView extends FileView {
         const nextMatchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '🔽' });
         const closeSearchBtn = this.searchContainerEl.createEl('button', { cls: 'office-preview-search-btn', text: '✖' });
 
-        // 3. 代码双栏主视口布局 (左侧内容 70% : 右侧大纲 30% -> 7:3 比例)
+        // 3. 主视口容器
         const mainBodyEl = container.createDiv({ cls: 'office-preview-code-body' });
         
-        const showOutlineInitially = supportsOutline && this.isOutlineVisible;
+        const showOutlineInitially = supportsOutline && this.isOutlineVisible && !this.isEditMode;
+        
+        // 预览视口与大纲面板
         const renderWrapper = mainBodyEl.createDiv({
-            cls: `office-preview-code-wrapper ${!showOutlineInitially ? 'is-full-width' : ''} ${this.isWordWrap ? 'is-word-wrap' : ''}`
+            cls: `office-preview-code-wrapper ${!showOutlineInitially ? 'is-full-width' : ''} ${this.isWordWrap ? 'is-word-wrap' : ''} ${this.isEditMode ? 'is-hidden' : ''}`
         });
         const outlinePane = mainBodyEl.createDiv({
             cls: `office-preview-outline-pane ${!showOutlineInitially ? 'is-hidden' : ''}`
         });
 
-        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: `正在读取 ${this.language.toUpperCase()} 内容...` });
+        // 编辑视口
+        const editorWrapper = mainBodyEl.createDiv({
+            cls: `office-preview-editor-wrapper ${this.isWordWrap ? 'is-word-wrap' : ''} ${!this.isEditMode ? 'is-hidden' : ''}`
+        });
+
+        const loadingEl = renderWrapper.createDiv({ cls: 'office-preview-loading', text: `正在读取 ${this.currentFile.name}...` });
 
         try {
             this.rawContent = await this.app.vault.read(this.currentFile);
@@ -245,7 +370,7 @@ export class CodeView extends FileView {
                 }
             }
 
-            // 渲染代码 DOM 树
+            // 渲染只读代码 DOM 树
             const codeMount = renderWrapper.createDiv({ cls: 'code-render-mount' });
             
             const displayCode = (this.language === 'json' && this.isJsonFormatted)
@@ -254,10 +379,25 @@ export class CodeView extends FileView {
 
             this.renderSyntaxTree(codeMount, displayCode);
 
-            // 渲染右侧 30% 层级大纲
+            // 渲染右侧层级大纲 (JSON, YAML, SQL)
             if (supportsOutline) {
                 this.renderOutlineTree(outlinePane, renderWrapper, displayCode);
             }
+
+            // 构建编辑器 DOM
+            this.buildEditorDOM(editorWrapper, this.rawContent);
+
+            // 模式切换事件 (✏️ 编辑 / 👁️ 预览)
+            this.modeToggleBtn.onclick = async () => {
+                await this.toggleEditMode(
+                    renderWrapper,
+                    outlinePane,
+                    editorWrapper,
+                    codeMount,
+                    supportsOutline,
+                    toggleOutlineBtn
+                );
+            };
 
             // 换行模式切换事件
             wrapToggleBtn.onclick = () => {
@@ -265,6 +405,7 @@ export class CodeView extends FileView {
                 wrapToggleBtn.toggleClass('is-active', this.isWordWrap);
                 wrapToggleBtn.setText(this.isWordWrap ? '↩️ 换行开启' : '↩️ 换行关闭');
                 renderWrapper.toggleClass('is-word-wrap', this.isWordWrap);
+                editorWrapper.toggleClass('is-word-wrap', this.isWordWrap);
             };
 
             // 大纲按钮切换事件 (保持 7:3 比例或一键 100% 全宽)
@@ -296,14 +437,16 @@ export class CodeView extends FileView {
 
             // 一键复制功能
             copyBtn.onclick = async () => {
-                const codeToCopy = (this.language === 'json' && this.isJsonFormatted)
-                    ? this.formattedContent
-                    : this.rawContent;
+                const codeToCopy = this.isEditMode
+                    ? (this.editorTextareaEl?.value || this.rawContent)
+                    : ((this.language === 'json' && this.isJsonFormatted)
+                        ? this.formattedContent
+                        : this.rawContent);
                 try {
                     await navigator.clipboard.writeText(codeToCopy);
                     copyBtn.setText('✓ 已复制');
                     window.setTimeout(() => copyBtn.setText('📋 复制'), 1800);
-                } catch (err) {
+                } catch {
                     // ignore
                 }
             };
@@ -352,12 +495,17 @@ export class CodeView extends FileView {
             closeSearchBtn.onclick = () => this.toggleSearch(false, codeMount);
             toggleSearchBtn.onclick = () => this.toggleSearch(!this.isSearchVisible, codeMount);
 
-            // 快捷键监听
+            // 全局快捷键监听 (Cmd+F 搜索，Cmd+S 保存)
             container.tabIndex = 0;
-            container.onkeydown = (e: KeyboardEvent) => {
+            container.onkeydown = async (e: KeyboardEvent) => {
                 if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
                     e.preventDefault();
                     this.toggleSearch(true, codeMount);
+                } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                    if (this.isEditMode) {
+                        e.preventDefault();
+                        await this.saveContent();
+                    }
                 }
             };
 
@@ -367,6 +515,163 @@ export class CodeView extends FileView {
                 cls: 'office-preview-error',
                 text: `读取文件失败: ${error instanceof Error ? error.message : String(error)}`
             });
+        }
+    }
+
+    /**
+     * 构建内置沉浸式文本/代码编辑器 DOM
+     */
+    private buildEditorDOM(editorWrapper: HTMLElement, initialText: string): void {
+        editorWrapper.empty();
+
+        const gutter = editorWrapper.createDiv({ cls: 'editor-gutter' });
+        this.editorLineNumbersEl = gutter.createDiv({ cls: 'editor-line-numbers' });
+
+        const textareaContainer = editorWrapper.createDiv({ cls: 'editor-textarea-container' });
+        this.editorTextareaEl = textareaContainer.createEl('textarea', {
+            cls: 'office-preview-textarea',
+            attr: {
+                spellcheck: 'false',
+                placeholder: `开始编辑 ${this.currentFile?.name || ''}...`
+            }
+        });
+        this.editorTextareaEl.value = initialText;
+
+        const updateLineNumbers = () => {
+            if (!this.editorTextareaEl || !this.editorLineNumbersEl) return;
+            const lineCount = (this.editorTextareaEl.value.match(/\n/g) || []).length + 1;
+            let numbers = '';
+            for (let i = 1; i <= lineCount; i++) {
+                numbers += i + '\n';
+            }
+            this.editorLineNumbersEl.setText(numbers);
+        };
+
+        const updateCursorInfo = () => {
+            if (!this.editorTextareaEl || !this.cursorInfoEl) return;
+            const val = this.editorTextareaEl.value;
+            const selStart = this.editorTextareaEl.selectionStart;
+            const linesUpToCursor = val.substring(0, selStart).split('\n');
+            const currentLine = linesUpToCursor.length;
+            const currentCol = linesUpToCursor[linesUpToCursor.length - 1].length + 1;
+            const totalLines = (val.match(/\n/g) || []).length + 1;
+            this.cursorInfoEl.setText(`第 ${currentLine} 行, 第 ${currentCol} 列 | 共 ${totalLines} 行, ${val.length} 字符`);
+        };
+
+        updateLineNumbers();
+        updateCursorInfo();
+
+        // 联动滚动：textarea 滚动与行号严格像素对齐
+        this.editorTextareaEl.addEventListener('scroll', () => {
+            if (this.editorLineNumbersEl && this.editorTextareaEl) {
+                this.editorLineNumbersEl.scrollTop = this.editorTextareaEl.scrollTop;
+            }
+        });
+
+        // 输入监听
+        this.editorTextareaEl.addEventListener('input', () => {
+            this.hasUnsavedChanges = true;
+            this.updateEditStatus();
+            updateLineNumbers();
+            updateCursorInfo();
+        });
+
+        // 光标与选择位置追踪
+        this.editorTextareaEl.addEventListener('click', updateCursorInfo);
+        this.editorTextareaEl.addEventListener('keyup', (e: KeyboardEvent) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+                updateCursorInfo();
+            }
+        });
+
+        // 快捷键支持：Tab 缩进与 Cmd+S 保存
+        this.editorTextareaEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.editorTextareaEl!.selectionStart;
+                const end = this.editorTextareaEl!.selectionEnd;
+                const val = this.editorTextareaEl!.value;
+                this.editorTextareaEl!.value = val.substring(0, start) + '  ' + val.substring(end);
+                this.editorTextareaEl!.selectionStart = this.editorTextareaEl!.selectionEnd = start + 2;
+                this.hasUnsavedChanges = true;
+                this.updateEditStatus();
+                updateLineNumbers();
+                updateCursorInfo();
+            } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                await this.saveContent();
+            }
+        });
+    }
+
+    /**
+     * 切换【编辑模式】与【预览模式】
+     */
+    private async toggleEditMode(
+        renderWrapper: HTMLElement,
+        outlinePane: HTMLElement,
+        editorWrapper: HTMLElement,
+        codeMount: HTMLElement,
+        supportsOutline: boolean,
+        toggleOutlineBtn: HTMLButtonElement | null
+    ): Promise<void> {
+        if (this.isEditMode) {
+            // 切回预览模式：若有改动，先自动保存，保证内容无缝同步
+            if (this.hasUnsavedChanges) {
+                await this.saveContent();
+            }
+            this.isEditMode = false;
+            if (this.modeToggleBtn) {
+                this.modeToggleBtn.setText('✏️ 编辑');
+                this.modeToggleBtn.removeClass('is-active');
+            }
+            if (this.saveBtn) this.saveBtn.addClass('is-hidden');
+            if (this.editStatusBadgeEl) this.editStatusBadgeEl.addClass('is-hidden');
+            if (this.cursorInfoEl) this.cursorInfoEl.addClass('is-hidden');
+
+            editorWrapper.addClass('is-hidden');
+            renderWrapper.removeClass('is-hidden');
+
+            if (supportsOutline && toggleOutlineBtn) {
+                toggleOutlineBtn.removeClass('is-hidden');
+                if (this.isOutlineVisible) {
+                    outlinePane.removeClass('is-hidden');
+                    renderWrapper.removeClass('is-full-width');
+                }
+            }
+
+            // 更新高亮渲染
+            codeMount.empty();
+            const displayCode = (this.language === 'json' && this.isJsonFormatted)
+                ? this.formattedContent
+                : this.rawContent;
+            this.renderSyntaxTree(codeMount, displayCode);
+            if (supportsOutline) {
+                this.renderOutlineTree(outlinePane, renderWrapper, displayCode);
+            }
+        } else {
+            // 进入编辑模式
+            this.isEditMode = true;
+            if (this.modeToggleBtn) {
+                this.modeToggleBtn.setText('👁️ 预览');
+                this.modeToggleBtn.addClass('is-active');
+            }
+            if (this.saveBtn) this.saveBtn.removeClass('is-hidden');
+            if (this.editStatusBadgeEl) this.editStatusBadgeEl.removeClass('is-hidden');
+            if (this.cursorInfoEl) this.cursorInfoEl.removeClass('is-hidden');
+
+            renderWrapper.addClass('is-hidden');
+            outlinePane.addClass('is-hidden');
+            editorWrapper.removeClass('is-hidden');
+
+            if (toggleOutlineBtn) {
+                toggleOutlineBtn.addClass('is-hidden');
+            }
+
+            if (this.editorTextareaEl) {
+                this.editorTextareaEl.value = this.rawContent;
+                this.editorTextareaEl.focus();
+            }
         }
     }
 
@@ -432,9 +737,13 @@ export class CodeView extends FileView {
     private renderOutlineTree(outlinePane: HTMLElement, codeWrapper: HTMLElement, codeText: string): void {
         outlinePane.empty();
 
-        this.outlineTree = this.language === 'json'
-            ? this.buildJsonOutlineTree(codeText)
-            : this.buildYamlOutlineTree(codeText);
+        if (this.language === 'json') {
+            this.outlineTree = this.buildJsonOutlineTree(codeText);
+        } else if (this.language === 'sql') {
+            this.outlineTree = this.buildSqlOutlineTree(codeText);
+        } else {
+            this.outlineTree = this.buildYamlOutlineTree(codeText);
+        }
 
         const totalNodes = this.countTreeNodes(this.outlineTree);
 
@@ -662,6 +971,60 @@ export class CodeView extends FileView {
                     type,
                     preview,
                     level,
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
+                });
+            }
+        });
+
+        return this.constructTreeFromFlatNodes(flatNodes);
+    }
+
+    /**
+     * 构建 SQL 结构大纲 (提取章节注释、表、视图、索引 DDL 结构)
+     */
+    private buildSqlOutlineTree(sqlText: string): OutlineTreeNode[] {
+        const flatNodes: OutlineTreeNode[] = [];
+        const lines = sqlText.split('\n');
+
+        lines.forEach((line, idx) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+
+            // 1. 注释章节标题: 以 -- 开头，后跟文字
+            const commentMatch = trimmed.match(/^--\s*([#=*~-]+\s*)?([^\s=*~#-].*)$/);
+            if (commentMatch && !trimmed.startsWith('-- =') && !trimmed.startsWith('-- -') && !trimmed.startsWith('-- *')) {
+                const commentTitle = commentMatch[2].trim();
+                if (commentTitle.length > 1 && !commentTitle.startsWith('Nacos') && !commentTitle.startsWith('http')) {
+                    flatNodes.push({
+                        id: `sql-sec-${idx + 1}`,
+                        key: commentTitle,
+                        path: commentTitle,
+                        type: 'value',
+                        preview: '章节',
+                        level: 0,
+                        lineNumber: idx + 1,
+                        children: [],
+                        isCollapsed: false
+                    });
+                    return;
+                }
+            }
+
+            // 2. DDL 语句结构: CREATE TABLE, CREATE VIEW, CREATE INDEX 等
+            const ddlMatch = trimmed.match(/^(?:CREATE\s+(?:OR\s+REPLACE\s+)?(?:TEMPORARY\s+)?(TABLE|VIEW|INDEX|PROCEDURE|FUNCTION)|ALTER\s+TABLE|DROP\s+TABLE)\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:`?([a-zA-Z0-9_.-]+)`?|\"?([a-zA-Z0-9_.-]+)\"?)/i);
+            if (ddlMatch) {
+                const operation = (ddlMatch[1] || 'TABLE').toUpperCase();
+                const targetName = ddlMatch[2] || ddlMatch[3] || '';
+                const lastNodeIsSection = flatNodes.length > 0 && flatNodes[flatNodes.length - 1].type === 'value';
+                flatNodes.push({
+                    id: `sql-ddl-${idx + 1}`,
+                    key: targetName || trimmed.substring(0, 30),
+                    path: targetName || '',
+                    type: 'object',
+                    preview: operation,
+                    level: lastNodeIsSection ? 1 : 0,
                     lineNumber: idx + 1,
                     children: [],
                     isCollapsed: false

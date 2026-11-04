@@ -998,3 +998,147 @@ mark.code-search-highlight.is-active {
     font-weight: bold;
     box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6);
 }
+
+/* =========================================================
+ * 文本与代码实时编辑模式 (Editor Mode)
+ * ========================================================= */
+.office-preview-editor-wrapper {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-primary);
+}
+
+.office-preview-editor-wrapper.is-hidden {
+    display: none;
+}
+
+.office-preview-editor-wrapper .editor-gutter {
+    width: 48px;
+    min-width: 48px;
+    background-color: var(--background-primary-alt);
+    border-right: 1px solid var(--border-color);
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    opacity: 0.85;
+}
+
+.office-preview-editor-wrapper .editor-line-numbers {
+    font-family: var(--font-monospace, 'Menlo', 'Consolas', 'Courier New', monospace);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: right;
+    padding: 12px 10px 12px 4px;
+    color: var(--text-faint);
+    white-space: pre;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.office-preview-editor-wrapper .editor-textarea-container {
+    flex: 1;
+    display: flex;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.office-preview-textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-normal);
+    font-family: var(--font-monospace, 'Menlo', 'Consolas', 'Courier New', monospace);
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 12px 16px;
+    margin: 0;
+    resize: none;
+    tab-size: 2;
+    -moz-tab-size: 2;
+    box-sizing: border-box;
+    white-space: pre;
+    overflow: auto;
+}
+
+.office-preview-editor-wrapper.is-word-wrap .office-preview-textarea {
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+/* 编辑状态徽章 */
+.office-preview-status-badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.office-preview-status-badge.is-saved {
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #2ea043;
+    border: 1px solid rgba(46, 160, 67, 0.25);
+}
+
+.theme-dark .office-preview-status-badge.is-saved {
+    background-color: rgba(63, 185, 80, 0.2);
+    color: #56d364;
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.office-preview-status-badge.is-dirty {
+    background-color: rgba(210, 153, 34, 0.18);
+    color: #b08800;
+    border: 1px solid rgba(210, 153, 34, 0.35);
+}
+
+.theme-dark .office-preview-status-badge.is-dirty {
+    background-color: rgba(210, 153, 34, 0.25);
+    color: #f0883e;
+    border: 1px solid rgba(210, 153, 34, 0.4);
+}
+
+.office-preview-status-badge.is-hidden {
+    display: none;
+}
+
+/* 光标与行列统计信息 */
+.office-preview-cursor-info {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: var(--font-monospace, monospace);
+    display: inline-flex;
+    align-items: center;
+}
+
+.office-preview-cursor-info.is-hidden {
+    display: none;
+}
+
+/* 保存按钮特别强调 */
+.office-preview-save-btn {
+    font-weight: 600;
+    color: var(--interactive-accent);
+}
+
+.office-preview-save-btn:hover {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.office-preview-save-btn.is-hidden {
+    display: none;
+}
