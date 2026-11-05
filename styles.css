@@ -984,6 +984,44 @@ mark.pptx-search-highlight.is-active {
     font-weight: 600;
 }
 
+/* Properties 与 .env 键值对着色优化 */
+.language-properties .token.attr-name {
+    color: #0969da;
+    font-weight: 600;
+}
+
+.theme-dark .language-properties .token.attr-name {
+    color: #79c0ff;
+    font-weight: 600;
+}
+
+.language-properties .token.attr-value {
+    color: #0a8f4c;
+}
+
+.theme-dark .language-properties .token.attr-value {
+    color: #7ee787;
+}
+
+/* Python 语法着色增强 */
+.language-python .token.builtin {
+    color: #953800;
+}
+
+.theme-dark .language-python .token.builtin {
+    color: #ffa657;
+}
+
+.language-python .token.decorator {
+    color: #8250df;
+    font-style: italic;
+}
+
+.theme-dark .language-python .token.decorator {
+    color: #d2a8ff;
+    font-style: italic;
+}
+
 /* Code 搜索高亮 */
 mark.code-search-highlight {
     background-color: rgba(255, 226, 89, 0.6);

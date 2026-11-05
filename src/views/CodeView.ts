@@ -3,6 +3,10 @@ import Prism from 'prismjs';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-yaml';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-properties';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-ini';
 
 export const VIEW_TYPE_CODE = 'office-preview-code-view';
 
@@ -61,20 +65,16 @@ export class CodeView extends FileView {
     }
 
     getIcon(): string {
-        const ext = this.currentFile?.extension?.toLowerCase();
-        switch (ext) {
-            case 'json':
-                return 'code-glyph';
-            case 'sql':
-                return 'database';
-            case 'yaml':
-            case 'yml':
-                return 'file-text';
-            case 'txt':
-                return 'document';
-            default:
-                return 'code';
-        }
+        const ext = this.currentFile?.extension?.toLowerCase() || '';
+        const name = this.currentFile?.name?.toLowerCase() || '';
+
+        if (name.includes('.env') || ext === 'env' || name === '.env') return 'sliders-horizontal';
+        if (ext === 'py' || ext === 'pyw') return 'code-glyph';
+        if (ext === 'sql') return 'database';
+        if (ext === 'json') return 'code-glyph';
+        if (ext === 'yaml' || ext === 'yml') return 'file-text';
+        if (ext === 'txt') return 'document';
+        return 'code';
     }
 
     async onLoadFile(file: TFile): Promise<void> {
@@ -84,7 +84,7 @@ export class CodeView extends FileView {
         this.isSearchVisible = false;
         this.isEditMode = false;
         this.hasUnsavedChanges = false;
-        this.determineLanguage(file.extension);
+        this.determineLanguage(file.extension, file.name);
         await this.renderCode();
     }
 
@@ -115,9 +115,26 @@ export class CodeView extends FileView {
         this.contentEl.empty();
     }
 
-    private determineLanguage(ext: string): void {
-        const lower = ext.toLowerCase();
-        switch (lower) {
+    private determineLanguage(ext: string, filename: string = ''): void {
+        const lowerExt = (ext || '').toLowerCase();
+        const lowerName = (filename || '').toLowerCase();
+
+        // 1. 优先根据文件名特征判断（环境配置与各类点文件）
+        if (lowerName.includes('.env') || lowerName === '.env' || lowerExt === 'env') {
+            this.language = 'properties';
+            return;
+        }
+        if (lowerName.endsWith('.gitignore') || lowerName.endsWith('.npmignore') || lowerName.endsWith('.dockerignore')) {
+            this.language = 'bash';
+            return;
+        }
+        if (lowerName === '.editorconfig' || lowerName.endsWith('.ini') || lowerName.endsWith('.cfg')) {
+            this.language = 'ini';
+            return;
+        }
+
+        // 2. 根据扩展名判断
+        switch (lowerExt) {
             case 'json':
                 this.language = 'json';
                 break;
@@ -128,9 +145,20 @@ export class CodeView extends FileView {
             case 'yml':
                 this.language = 'yaml';
                 break;
-            case 'txt':
-                this.language = 'plaintext';
+            case 'py':
+            case 'pyw':
+                this.language = 'python';
                 break;
+            case 'conf':
+            case 'properties':
+                this.language = 'properties';
+                break;
+            case 'sh':
+            case 'bash':
+            case 'zsh':
+                this.language = 'bash';
+                break;
+            case 'txt':
             default:
                 this.language = 'plaintext';
                 break;
@@ -138,18 +166,14 @@ export class CodeView extends FileView {
     }
 
     private getFileIconEmoji(): string {
-        const ext = this.currentFile?.extension?.toLowerCase();
-        if (ext === 'txt') return '📄';
-        switch (this.language) {
-            case 'json':
-                return '{ }';
-            case 'sql':
-                return '🗄️';
-            case 'yaml':
-                return '📋';
-            default:
-                return '📄';
-        }
+        const name = this.currentFile?.name?.toLowerCase() || '';
+        if (name.includes('.env') || this.language === 'properties') return '⚙️';
+        if (this.language === 'python') return '🐍';
+        if (this.language === 'sql') return '🗄️';
+        if (this.language === 'json') return '{ }';
+        if (this.language === 'yaml') return '📋';
+        if (this.language === 'bash') return '💻';
+        return '📄';
     }
 
     private formatDate(mtime: number): string {
@@ -292,9 +316,9 @@ export class CodeView extends FileView {
             text: this.isWordWrap ? '↩️ 换行开启' : '↩️ 换行关闭'
         });
 
-        // 大纲面板切换按钮 (对 json, yaml, sql 生效)
+        // 大纲面板切换按钮 (对 json, yaml, sql, python, properties 生效)
         let toggleOutlineBtn: HTMLButtonElement | null = null;
-        const supportsOutline = this.language === 'json' || this.language === 'yaml' || this.language === 'sql';
+        const supportsOutline = ['json', 'yaml', 'sql', 'python', 'properties', 'bash'].includes(this.language);
         if (supportsOutline) {
             toggleOutlineBtn = controls.createEl('button', {
                 cls: `office-preview-btn ${this.isOutlineVisible ? 'is-active' : ''} ${this.isEditMode ? 'is-hidden' : ''}`,
@@ -379,7 +403,7 @@ export class CodeView extends FileView {
 
             this.renderSyntaxTree(codeMount, displayCode);
 
-            // 渲染右侧层级大纲 (JSON, YAML, SQL)
+            // 渲染右侧层级大纲
             if (supportsOutline) {
                 this.renderOutlineTree(outlinePane, renderWrapper, displayCode);
             }
@@ -591,8 +615,8 @@ export class CodeView extends FileView {
                 const start = this.editorTextareaEl!.selectionStart;
                 const end = this.editorTextareaEl!.selectionEnd;
                 const val = this.editorTextareaEl!.value;
-                this.editorTextareaEl!.value = val.substring(0, start) + '  ' + val.substring(end);
-                this.editorTextareaEl!.selectionStart = this.editorTextareaEl!.selectionEnd = start + 2;
+                this.editorTextareaEl!.value = val.substring(0, start) + '    ' + val.substring(end);
+                this.editorTextareaEl!.selectionStart = this.editorTextareaEl!.selectionEnd = start + 4;
                 this.hasUnsavedChanges = true;
                 this.updateEditStatus();
                 updateLineNumbers();
@@ -741,6 +765,10 @@ export class CodeView extends FileView {
             this.outlineTree = this.buildJsonOutlineTree(codeText);
         } else if (this.language === 'sql') {
             this.outlineTree = this.buildSqlOutlineTree(codeText);
+        } else if (this.language === 'python') {
+            this.outlineTree = this.buildPythonOutlineTree(codeText);
+        } else if (this.language === 'properties' || this.language === 'bash') {
+            this.outlineTree = this.buildEnvOutlineTree(codeText);
         } else {
             this.outlineTree = this.buildYamlOutlineTree(codeText);
         }
@@ -1025,6 +1053,137 @@ export class CodeView extends FileView {
                     type: 'object',
                     preview: operation,
                     level: lastNodeIsSection ? 1 : 0,
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
+                });
+            }
+        });
+
+        return this.constructTreeFromFlatNodes(flatNodes);
+    }
+
+    /**
+     * 构建 Python 结构大纲 (提取类、方法、独立函数、模块注释章节)
+     */
+    private buildPythonOutlineTree(pyText: string): OutlineTreeNode[] {
+        const flatNodes: OutlineTreeNode[] = [];
+        const lines = pyText.split('\n');
+
+        lines.forEach((line, idx) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+
+            // 1. 注释章节
+            const commentMatch = trimmed.match(/^#\s*([#=*~-]+\s*)?([^\s=*~#-].*)$/);
+            if (commentMatch && !trimmed.startsWith('# =') && !trimmed.startsWith('# -') && !trimmed.startsWith('# *')) {
+                const commentTitle = commentMatch[2].trim();
+                if (commentTitle.length > 1) {
+                    flatNodes.push({
+                        id: `py-sec-${idx + 1}`,
+                        key: commentTitle,
+                        path: commentTitle,
+                        type: 'value',
+                        preview: '章节',
+                        level: 0,
+                        lineNumber: idx + 1,
+                        children: [],
+                        isCollapsed: false
+                    });
+                    return;
+                }
+            }
+
+            // 2. class ClassName(...)
+            const classMatch = line.match(/^(\s*)class\s+([a-zA-Z0-9_]+)/);
+            if (classMatch) {
+                const indent = classMatch[1].length;
+                const className = classMatch[2];
+                const level = Math.floor(indent / 4);
+                flatNodes.push({
+                    id: `py-cls-${idx + 1}`,
+                    key: className,
+                    path: className,
+                    type: 'object',
+                    preview: 'class',
+                    level,
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
+                });
+                return;
+            }
+
+            // 3. def func_name(...) / async def func_name(...)
+            const defMatch = line.match(/^(\s*)(async\s+def|def)\s+([a-zA-Z0-9_]+)/);
+            if (defMatch) {
+                const indent = defMatch[1].length;
+                const isAsync = defMatch[2].startsWith('async');
+                const funcName = defMatch[3];
+                const level = Math.floor(indent / 4);
+                flatNodes.push({
+                    id: `py-def-${idx + 1}`,
+                    key: funcName,
+                    path: funcName,
+                    type: 'value',
+                    preview: isAsync ? 'async def' : 'def',
+                    level,
+                    lineNumber: idx + 1,
+                    children: [],
+                    isCollapsed: false
+                });
+            }
+        });
+
+        return this.constructTreeFromFlatNodes(flatNodes);
+    }
+
+    /**
+     * 构建环境配置与点文件结构大纲 (.env, properties, conf 等)
+     */
+    private buildEnvOutlineTree(envText: string): OutlineTreeNode[] {
+        const flatNodes: OutlineTreeNode[] = [];
+        const lines = envText.split('\n');
+        let currentSectionLevel = 0;
+
+        lines.forEach((line, idx) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+
+            // 1. 注释章节分组
+            const commentMatch = trimmed.match(/^#\s*([#=*~-]+\s*)?([^\s=*~#-].*)$/);
+            if (commentMatch && !trimmed.startsWith('# =') && !trimmed.startsWith('# -') && !trimmed.startsWith('# *')) {
+                const commentTitle = commentMatch[2].trim();
+                if (commentTitle.length > 1) {
+                    currentSectionLevel = 1;
+                    flatNodes.push({
+                        id: `env-sec-${idx + 1}`,
+                        key: commentTitle,
+                        path: commentTitle,
+                        type: 'value',
+                        preview: '分组',
+                        level: 0,
+                        lineNumber: idx + 1,
+                        children: [],
+                        isCollapsed: false
+                    });
+                    return;
+                }
+            }
+
+            // 2. 键值对 KEY=VALUE 或 KEY: VALUE
+            const kvMatch = trimmed.match(/^([a-zA-Z0-9_.-]+)\s*[:=]\s*(.*)$/);
+            if (kvMatch) {
+                const key = kvMatch[1];
+                let val = kvMatch[2].trim().replace(/^["']|["']$/g, '');
+                if (val.length > 24) val = val.substring(0, 22) + '...';
+                flatNodes.push({
+                    id: `env-kv-${idx + 1}`,
+                    key,
+                    path: key,
+                    type: 'object',
+                    preview: val || '=',
+                    level: currentSectionLevel,
                     lineNumber: idx + 1,
                     children: [],
                     isCollapsed: false

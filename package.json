@@ -1,7 +1,7 @@
 {
   "name": "obsidian-office-preview",
-  "version": "1.4.0",
-  "description": "Native Word, Excel, PowerPoint, Text, SQL, JSON, and YAML preview and editing plugin for Obsidian",
+  "version": "1.5.0",
+  "description": "Native Word, Excel, PowerPoint, Python, Text, SQL, JSON, YAML, and Dotfiles (.env) preview and editing plugin for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

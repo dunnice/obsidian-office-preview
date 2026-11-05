@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/dunnice/obsidian-office-preview?style=flat-square)](https://github.com/dunnice/obsidian-office-preview/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-**Office Preview** is an Obsidian plugin for native, smooth, and privacy-first previewing and editing of Word (`.docx`), Excel (`.xlsx`, `.xls`, `.csv`), PowerPoint (`.pptx`, `.ppt`), Text (`.txt`), SQL, JSON, and YAML files directly within Obsidian.
+**Office Preview** is an Obsidian plugin for native, smooth, and privacy-first previewing and editing of Word (`.docx`), Excel (`.xlsx`, `.xls`, `.csv`), PowerPoint (`.pptx`, `.ppt`), Python (`.py`), Text (`.txt`), SQL, JSON, YAML, and Dotfiles (`.env`, `.gitignore`) directly within Obsidian.
 
 Zero external software dependencies, zero network requests, 100% locally rendered in Obsidian.
 
@@ -32,14 +32,16 @@ Zero external software dependencies, zero network requests, 100% locally rendere
   - **🖥️ Fullscreen Presentation**: Enter distraction-free fullscreen presentation mode anytime.
   - **🔍 In-Slide Full-Text Search**: Full-text search across all slide text boxes with keyword jumps.
 
-- 💻 **Structured Code & Text Files (`.txt`, `.sql`, `.json`, `.yaml`, `.yml`) Preview & Real-Time Editing**
+- 💻 **Structured Code, Python & Config Files (`.py`, `.env`, `.txt`, `.sql`, `.json`, `.yaml`, `.yml`) Preview & Real-Time Editing**
   - **✏️ Fluid Dual-Mode (Preview / Edit)**: Seamless one-click toggle between crisp read-only preview and distraction-free in-place editing.
   - **💾 One-Click & Shortcut Save (`Cmd+S` / `Ctrl+S`)**: Instant saving directly back to your vault with live status badges (`✓ Saved` / `● Unsaved changes`) and auto-save on switch.
+  - **🐍 Python (`.py`, `.pyw`) Support**: Full syntax highlighting, tab indentation, and an intelligent symbol outline extracting classes (`class`) and methods/functions (`def`, `async def`).
+  - **⚙️ Dotfiles & Environment Configs (`.env`, `.env.*`, `.gitignore`, `.editorconfig`)**: Dedicated dotfile switcher/creator modal (`Cmd+P` -> "浏览或创建隐藏与配置文件"), full editing, and key-value outline navigation.
   - **📝 Text (`.txt`) & SQL (`.sql`) Support**: Full support for opening, reading, and editing `.txt` and `.sql` scripts with aligned gutter line numbers and Tab indentation.
   - **🗄️ SQL DDL & Section Outline**: Auto-extracts `CREATE TABLE`, `CREATE VIEW`, `INDEX`, and comment sections into an interactive hierarchical outline tree.
   - **{ } JSON Formatting**: Auto indentation and beautification, with quick toggle between formatted and compact view.
   - **↩️ Smart Word Wrap**: Automatic line breaking according to viewport width to prevent horizontal overflow.
-  - **🗂️ 7:3 Golden Ratio Tree Outline**: Displays hierarchical keys for JSON/YAML/SQL on the right side with collapsible parent nodes and instant code line navigation.
+  - **🗂️ 7:3 Golden Ratio Tree Outline**: Displays hierarchical keys for JSON/YAML/SQL/Python/Dotenv on the right side with collapsible parent nodes and instant code line navigation.
   - **🎨 Syntax Highlighting**: Prism.js syntax coloring adapted for both dark and light Obsidian themes.
   - **Line Numbers & One-Click Copy**: Clean gutter numbers and one-click clipboard copying.
   - **🔍 Full-Text Search**: `Cmd+F` search with hit counting and Enter navigation.
@@ -71,15 +73,17 @@ Zero external software dependencies, zero network requests, 100% locally rendere
   - **🖥️ 一键全屏演示**：沉浸式深黑背景全屏放映。
   - **🔍 幻灯片全文检索**：全局搜寻幻灯片内文本并定位。
 
-- 💻 **结构化代码与文本文件 (`.txt` / `.sql` / `.json` / `.yaml` / `.yml`) 预览与实时编辑**
+- 💻 **结构化代码、Python 与配置文件 (`.py` / `.env` / `.txt` / `.sql` / `.json` / `.yaml` / `.yml`) 预览与实时编辑**
   - **✏️ 预览与编辑双模式自由切换**：支持顶部一键在【👁️ 预览】美化排版与【✏️ 编辑】沉浸式代码输入之间无缝切换。
   - **💾 快捷保存 (`Cmd+S` / `Ctrl+S`)**：支持快捷键一键写回 Obsidian 库，自带实时状态徽章（`✓ 已保存` / `● 未保存修改`），切回预览或离开自动保存。
+  - **🐍 Python 脚本 (`.py` / `.pyw`) 支持**：开箱即用 Python 语法高亮，大纲面板自动提取 Class 类、`def` / `async def` 函数与注释分段，支持点击快速跳转。
+  - **⚙️ 环境配置与隐藏文件 (`.env` / `.gitignore` / `.editorconfig`) 支持**：内置快捷查找/新建命令（`Cmd+P` -> "浏览或创建隐藏与配置文件"），解决 Obsidian 默认过滤点文件问题，支持键值对自动解析与大纲导航。
   - **📝 文本 (`.txt`) 与 SQL (`.sql`) 全面支持**：完整支持 `.txt` 与 `.sql` 文件开箱即用预览与编辑，带有像素对齐的动态行号栏和 Tab 智能缩进。
   - **🗄️ SQL 结构大纲解析**：自动提取 SQL 脚本中的 `CREATE TABLE`、`VIEW`、`INDEX` 以及模块注释章节，树状大纲一览无余并支持一键定位。
   - **{ } JSON 智能格式化**：自动缩进美化排版，支持一键切换【✨ 格式化 / 原始紧凑】。
   - **↩️ 智能自动换行 (Word Wrap)**：内容根据视口宽度自动折行，杜绝横向滚动条，支持编辑与预览实时联动。
-  - **🗂️ 7:3 黄金比例树形大纲**：右侧展示 JSON/YAML/SQL 层级结构，支持逐级折叠与展开，点击快速平滑定位代码行。
-  - **🎨 语法高亮**：完整支持 SQL、JSON、YAML 语法着色（适配暗黑/明亮主题）。
+  - **🗂️ 7:3 黄金比例树形大纲**：右侧展示 JSON/YAML/SQL/Python/Dotenv 层级结构，支持逐级折叠与展开，点击快速平滑定位代码行。
+  - **🎨 语法高亮**：完整支持 Python、Properties/Env、Bash、SQL、JSON、YAML 语法着色（适配暗黑/明亮主题）。
   - **对齐行号与一键复制**：独立行号列与顶部一键复制代码/文本全文。
 
 - 🔒 **全本地 & 私密安全**
